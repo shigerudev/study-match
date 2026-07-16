@@ -16,7 +16,16 @@ router.get('/:id', async (req, res) => {
 
 router.patch('/:id', async (req, res) => {
   try {
-    const allowed = ['name', 'avatarUrl', 'role', 'bio', 'career', 'subjects', 'goals', 'availability', 'level'];
+    const allowed = [
+      'name',
+      'avatarUrl',
+      'role',
+      'bio',
+      'career',
+      'subjects',
+      'goals',
+      'availability',
+    ];
     const body = req.body ?? {};
     const updates = {};
 
@@ -35,8 +44,16 @@ router.patch('/:id', async (req, res) => {
       return res.status(400).json({ error: 'role inválido' });
     }
 
+    if (updates.name !== undefined && String(updates.name).trim().length < 2) {
+      return res.status(400).json({ error: 'name debe tener al menos 2 caracteres' });
+    }
+
     if (updates.subjects && (!Array.isArray(updates.subjects) || updates.subjects.length < 1)) {
       return res.status(400).json({ error: 'Se requiere al menos una materia' });
+    }
+
+    if (updates.goals && !Array.isArray(updates.goals)) {
+      return res.status(400).json({ error: 'goals debe ser un arreglo' });
     }
 
     if (updates.availability && (!Array.isArray(updates.availability) || updates.availability.length < 1)) {

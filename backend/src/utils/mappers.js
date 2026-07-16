@@ -8,15 +8,22 @@ export function mapUser(row) {
     bio: row.bio,
     career: row.career,
     subjects: row.subjects ?? [],
+    subjectDetails: row.subjectDetails ?? [],
     goals: row.goals ?? [],
     availability: row.availability ?? [],
-    level: row.level,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
 export function mapSubject(row) {
   if (!row) return null;
-  return { id: row.id, name: row.name, color: row.color };
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    color: row.color,
+  };
 }
 
 export function mapPost(row, author, subject) {
@@ -32,6 +39,7 @@ export function mapPost(row, author, subject) {
     mediaUrl: row.media_url,
     status: row.status,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
     author: author ? mapUser(author) : undefined,
     subject: subject ? mapSubject(subject) : undefined,
   };
@@ -45,6 +53,7 @@ export function mapSwipe(row) {
     targetId: row.target_id,
     decision: row.decision,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -71,10 +80,8 @@ export function mapSession(row) {
     durationMinutes: row.duration_minutes,
     modality: row.modality,
     status: row.status,
+    changeNote: row.change_note,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
-}
-
-export function newId(prefix) {
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }

@@ -40,6 +40,10 @@ insert into public.posts (id, author_id, subject_id, type, title, description, t
   ('00000000-0000-4000-8000-000000000206', '00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000101', 'foto', 'Límites: método paso a paso', 'Ejercicio resuelto para practicar antes del parcial.', array['limites', 'ejercicios'], 'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=900&q=80', '2026-07-16 09:00:00+00')
 on conflict (id) do update set title = excluded.title, description = excluded.description, tags = excluded.tags, media_url = excluded.media_url, created_at = excluded.created_at;
 
+insert into public.saved_posts (profile_id, post_id) values
+  ('00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000201')
+on conflict (profile_id, post_id) do nothing;
+
 -- María ya indicó interés en Sofía; el like de Sofía hacia María crea el match en la demo.
 insert into public.swipes (actor_id, target_id, decision) values
   ('00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000001', 'like')

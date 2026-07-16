@@ -9,12 +9,23 @@ function overlap(a = [], b = []) {
 }
 
 function availabilityOverlap(a = [], b = []) {
-  const key = (item) => `${item.day}|${item.slot}`;
+  const key = (item) =>
+    typeof item === 'string'
+      ? item.toLowerCase()
+      : `${item.day ?? ''}|${item.slot ?? ''}`.toLowerCase();
   const setB = new Set(b.map(key));
   return a.filter((item) => setB.has(key(item)));
 }
 
-const LEVEL_ORDER = { basico: 1, intermedio: 2, avanzado: 3 };
+function hasCompatibleLevel(actor, target) {
+  const targetById = new Map(
+    (target.subjectDetails ?? []).map((subject) => [subject.id, subject.level]),
+  );
+  return (actor.subjectDetails ?? []).some((subject) => {
+    const targetLevel = targetById.get(subject.id);
+    return targetLevel !== undefined && Math.abs(subject.level - targetLevel) <= 1;
+  });
+}
 
 export function computeCompatibility(actor, target) {
   const reasons = [];
@@ -22,39 +33,27 @@ export function computeCompatibility(actor, target) {
 
   const sharedSubjects = overlap(actor.subjects, target.subjects);
   if (sharedSubjects.length) {
-    const points = Math.min(40, sharedSubjects.length * 20);
-    score += points;
+    score += 40;
     reasons.push(`Coinciden en ${sharedSubjects.slice(0, 2).join(' y ')}`);
   }
 
   const sharedGoals = overlap(actor.goals, target.goals);
   if (sharedGoals.length) {
-    score += Math.min(20, sharedGoals.length * 10);
+    score += 20;
     reasons.push(`Objetivo: ${sharedGoals[0]}`);
-  } else if (
-    actor.goals?.some((g) => /enseñar|mentor/i.test(g)) ||
-    target.goals?.some((g) => /enseñar|mentor/i.test(g))
-  ) {
-    score += 10;
-    reasons.push('Objetivo compatible de enseñanza/aprendizaje');
   }
 
   const sharedSlots = availabilityOverlap(actor.availability, target.availability);
   if (sharedSlots.length) {
-    score += Math.min(25, sharedSlots.length * 15);
-    const slot = sharedSlots[0].slot;
-    reasons.push(`Disponibilidad por la ${slot}`);
+    score += 25;
+    const slot =
+      typeof sharedSlots[0] === 'string' ? sharedSlots[0] : sharedSlots[0].slot;
+    reasons.push(`Disponibilidad compatible: ${slot}`);
   }
 
-  const la = LEVEL_ORDER[actor.level] ?? 2;
-  const lb = LEVEL_ORDER[target.level] ?? 2;
-  const levelDiff = Math.abs(la - lb);
-  if (levelDiff === 0) {
+  if (hasCompatibleLevel(actor, target)) {
     score += 15;
-    reasons.push('Mismo nivel');
-  } else if (levelDiff === 1) {
-    score += 10;
-    reasons.push('Nivel compatible');
+    reasons.push('Sus niveles son compatibles');
   }
 
   return {

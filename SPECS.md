@@ -1,8 +1,12 @@
 # Especificación del MVP — StudyMatch
 
-**Versión:** 1.0  
-**Estado:** lista para implementación  
+**Versión:** 1.1
+
+**Estado:** MVP en demo (frontend en Vercel; datos mock en UI; esquema Supabase y API Express listos para conectar)
+
 **Objetivo de demo:** una persona descubre contenido por clase, publica un recurso, realiza un match y agenda una sesión.
+
+**URL de demo:** https://study-match-mp4cusjeq-hugo-arias-projects.vercel.app
 
 ## 1. Visión del producto
 
@@ -42,9 +46,9 @@ El diferencial del MVP es unir tres acciones en una experiencia: **aprender desd
 
 ## 4. Navegación móvil
 
-La navegación inferior tiene cinco destinos:
+La navegación inferior tiene cinco destinos (implementados en Next.js App Router):
 
-| Destino | Ruta sugerida | Contenido |
+| Destino | Ruta | Contenido |
 | --- | --- | --- |
 | Inicio | `/home` | Feed, búsqueda y categorías de clases. |
 | Clases | `/classes` | Exploración de todas las clases y sus publicaciones. |
@@ -52,7 +56,7 @@ La navegación inferior tiene cinco destinos:
 | Match | `/match` | Tarjetas de perfiles compatibles. |
 | Perfil | `/profile` | Información, publicaciones, sesiones y guardados. |
 
-Inicio contiene una barra de búsqueda superior y categorías horizontales: `Todo`, `Cálculo`, `Inglés`, `Física`, `Programación` y `Diseño`.
+La landing `/` presenta la marca y enlaza a Inicio. Inicio contiene una barra de búsqueda superior y categorías horizontales: `Todo`, `Cálculo`, `Inglés`, `Física`, `Programación` y `Diseño`.
 
 ## 5. Historias de usuario y aceptación
 
@@ -113,7 +117,7 @@ Como usuario, quiero ver mi actividad y editar mi información.
 
 ### Compatibilidad
 
-El valor es explicable y puede utilizar datos semilla. Fórmula sugerida sobre 100:
+El valor es explicable y puede utilizar datos semilla. Fórmula sobre 100 (también implementada en SQL como `public.match_score`):
 
 | Señal | Puntos máximos |
 | --- | ---: |
@@ -126,41 +130,73 @@ La tarjeta debe mostrar la puntuación y una razón, por ejemplo: “Coinciden e
 
 ### Estados
 
-| Recurso | Estados |
+| Recurso | Estados / valores |
 | --- | --- |
-| Interés | `pendiente`, `omitido`, `aceptado` |
+| Swipe (`decision`) | `skip`, `like` |
 | Match | `activo`, `archivado` |
 | Sesión | `pendiente`, `aceptada`, `cambio_propuesto`, `cancelada`, `completada` |
 | Publicación | `publicada`, `eliminada` |
+| Tipo de publicación | `foto`, `video` |
 
-## 7. Modelo de datos mínimo
+## 7. Modelo de datos (Supabase canónico)
+
+Fuente de verdad del esquema: [`supabase/migrations/202607160001_initial_schema.sql`](./supabase/migrations/202607160001_initial_schema.sql) y seed en [`supabase/seed.sql`](./supabase/seed.sql).
 
 ```text
-User
-  id, name, avatarUrl, role, bio, career, subjects[], goals[], availability[]
-
 Subject
-  id, name, color
+  id (uuid), name, slug, color, createdAt
+
+Profile
+  id (uuid), authUserId?, name, avatarUrl, role(estudiante|profesor|ambos),
+  bio, career, goals[], availability (jsonb), createdAt, updatedAt
+
+ProfileSubject
+  profileId, subjectId, level (1-5), isTeaching
 
 Post
-  id, authorId, subjectId, type(photo|video), title, description, tags[], mediaUrl, createdAt
+  id, authorId, subjectId, type(foto|video), title, description,
+  tags[], mediaUrl, status(publicada|eliminada), createdAt, updatedAt
+
+SavedPost
+  profileId, postId, createdAt
 
 Swipe
-  id, actorId, targetId, decision(skip|like), createdAt
+  id, actorId, targetId, decision(skip|like), createdAt, updatedAt
 
 Match
-  id, userAId, userBId, score, reasons[], status, createdAt
+  id, userAId, userBId, score, reasons[], status(activo|archivado), createdAt
 
-Session
-  id, matchId, proposerId, scheduledAt, durationMinutes, modality, status
+StudySession
+  id, matchId, proposerId, scheduledAt, durationMinutes (30|60),
+  modality(virtual|presencial), status, changeNote?, createdAt, updatedAt
 ```
 
-## 8. Contrato de API sugerido
+Funciones de dominio en Supabase:
+
+- `match_score(actor, target)` → puntuación y razones.
+- `record_swipe(target, decision)` → registra swipe y crea match mutuo si aplica.
+- `current_profile_id()` → perfil ligado a `auth.uid()`.
+
+Storage: buckets `avatars` y `posts` (lectura pública en demo). RLS habilitado en las tablas públicas.
+
+### Nota sobre `backend/`
+
+La API Express en [`backend/`](./backend/) utiliza este mismo esquema canónico:
+`profiles`, `profile_subjects`, `posts`, `swipes`, `matches` y
+`study_sessions`. No mantiene un segundo esquema SQL.
+
+## 8. Contrato de API
+
+### 8.1 Express (`backend/`) — contrato HTTP del MVP
+
+Base local: `http://localhost:3001`.
 
 | Método | Ruta | Acción |
 | --- | --- | --- |
-| `GET` | `/api/posts?subject=&q=` | Obtener feed filtrado. |
+| `GET` | `/api/health` | Estado del servicio. |
+| `GET` | `/api/posts?subject=&q=&authorId=` | Obtener feed filtrado; `authorId` permite listar publicaciones del Perfil. |
 | `POST` | `/api/posts` | Crear publicación. |
+| `GET` | `/api/saved-posts?userId=` | Listar publicaciones guardadas del Perfil. |
 | `GET` | `/api/subjects` | Listar clases. |
 | `GET` | `/api/users/:id` | Consultar perfil. |
 | `PATCH` | `/api/users/:id` | Editar perfil. |
@@ -176,8 +212,8 @@ Session
 ```json
 POST /api/swipes
 {
-  "actorId": "user-1",
-  "targetId": "user-2",
+  "actorId": "00000000-0000-4000-8000-000000000001",
+  "targetId": "00000000-0000-4000-8000-000000000002",
   "decision": "like"
 }
 ```
@@ -196,12 +232,96 @@ POST /api/swipes
 
 Errores mínimos: `400` para datos inválidos, `404` para recursos inexistentes y `409` para acciones duplicadas.
 
+#### Peticiones de escritura
+
+`POST /api/posts`
+
+```json
+{
+  "authorId": "00000000-0000-4000-8000-000000000001",
+  "subjectId": "00000000-0000-4000-8000-000000000101",
+  "type": "foto",
+  "title": "Resumen de integrales",
+  "description": "Ejercicio resuelto",
+  "tags": ["integrales"],
+  "mediaUrl": "https://example.com/recurso.jpg"
+}
+```
+
+Requiere `authorId`, `subjectId`, `type`, `title` y `mediaUrl`. Devuelve `201`
+con `{ "post": ... }`.
+
+`PATCH /api/users/:id`
+
+```json
+{
+  "name": "Sofía Martínez",
+  "role": "estudiante",
+  "goals": ["Aprobar Cálculo I"],
+  "availability": ["tarde", "sabado"],
+  "subjects": [
+    {
+      "id": "00000000-0000-4000-8000-000000000101",
+      "level": 2,
+      "isTeaching": false
+    }
+  ]
+}
+```
+
+Todos los campos son opcionales, pero debe enviarse al menos uno. Si se envía
+`subjects`, reemplaza la selección actual y requiere al menos una materia.
+
+`POST /api/sessions`
+
+```json
+{
+  "matchId": "00000000-0000-4000-8000-000000000301",
+  "proposerId": "00000000-0000-4000-8000-000000000001",
+  "scheduledAt": "2026-07-18T16:00:00Z",
+  "durationMinutes": 60,
+  "modality": "virtual"
+}
+```
+
+Devuelve `201`; el estado inicial siempre es `pendiente`.
+
+`PATCH /api/sessions/:id` acepta `status`, `scheduledAt`, `durationMinutes`,
+`modality` y `changeNote`. Si cambia horario, duración, modalidad o nota sin
+enviar `status`, la sesión pasa a `cambio_propuesto`.
+
+### 8.2 Supabase (cliente / RPC)
+
+Cuando la UI deje de usar mocks, el frontend puede:
+
+- leer `subjects`, `profiles`, `posts` con el cliente `@supabase/supabase-js`;
+- invocar `record_swipe` para el flujo Match;
+- insertar/actualizar `study_sessions` para agendar.
+
+Variables: ver [`docs/INTEGRATIONS.md`](./docs/INTEGRATIONS.md).
+
+### 8.3 Estado de integración actual
+
+| Capa | Estado |
+| --- | --- |
+| UI Next.js (`/home`, `/classes`, `/create`, `/match`, `/profile`) | Implementada con datos mock en `src/data/` |
+| Esquema + seed Supabase | Listos en `supabase/` |
+| API Express | Lista en `backend/` |
+| Conexión UI → Supabase o Express | Pendiente (mock activo en demo) |
+
 ## 9. Datos semilla para la demo
 
-- 1 usuario activo: Sofía, estudiante de Ingeniería, interesada en Cálculo I e Inglés.
-- 4 perfiles de Match con disponibilidad y objetivos distintos; uno debe producir match mutuo.
+Definidos en [`supabase/seed.sql`](./supabase/seed.sql) (UUIDs fijos):
+
+- Usuario activo: Sofía Martínez (`...0001`), estudiante de Ingeniería; materias Cálculo e Inglés.
+- 4 perfiles adicionales: María (match mutuo al recibir like de Sofía), Carlos, Lucía y Diego.
+- 5 clases: Cálculo, Inglés, Física, Programación, Diseño.
 - 6 publicaciones: al menos 1 por cada clase visible en categorías.
-- 1 sesión pendiente y 1 sesión aceptada para poblar Perfil.
+- 1 publicación guardada por Sofía para poblar la pestaña Guardados.
+- 1 swipe previo María → Sofía (`like`) para producir match mutuo en la demo.
+- 1 match seed Sofía ↔ Carlos, con 1 sesión `pendiente` y 1 `aceptada`.
+
+La API Express consume directamente este seed y sus UUIDs.
 
 ## 10. Criterios de demostración
 
@@ -214,20 +334,24 @@ La demo termina con este recorrido, sin errores bloqueantes:
 5. Agenda una sesión virtual de 60 minutos.
 6. Consulta la sesión en Perfil.
 
+URL pública de referencia: https://study-match-mp4cusjeq-hugo-arias-projects.vercel.app
+
 ## 11. Decisiones técnicas
 
 | Tema | Decisión |
 | --- | --- |
-| Frontend | Next.js con TypeScript; Tailwind CSS, `lucide-react` y `motion` |
-| Backend API | Node.js + Express en `backend/` |
-| Persistencia | Supabase (PostgreSQL); Auth y Storage según integración del frontend |
-| Esquema y seed | Scripts SQL en `backend/sql/` + `npm run db:setup` |
-| Arrays del modelo | JSONB (`subjects`, `goals`, `availability`, `tags`, `reasons`) |
-| Auth MVP | Sin autenticación de producción en la API; el cliente envía `userId` en query o body |
-| Despliegue | Vercel; configuración y deploy corresponden al responsable full stack |
-| Medios | URLs de ejemplo en seed; Supabase Storage como implementación posterior |
-| Validación backend | `npm run dev` |
+| Frontend | Next.js + TypeScript; Tailwind CSS, `lucide-react` y `motion` |
+| Backend API | Node.js + Express en `backend/` (contrato HTTP del MVP) |
+| Persistencia canónica | Supabase (PostgreSQL) en `supabase/migrations` + `supabase/seed.sql` |
+| Auth / Storage | Preparados en migración (RLS, buckets `avatars`/`posts`); Auth de producción fuera del alcance de la demo |
+| Arrays / materias | En Supabase: `goals`/`tags` como `text[]`; materias vía `profile_subjects`; `availability` en JSONB |
+| Auth MVP en Express | Sin auth de producción; el cliente envía UUID de perfil en query o body |
+| Despliegue | Vercel (responsable full stack); demo ya publicada |
+| Medios | URLs de ejemplo en seed; Storage para implementación posterior |
+| Validación backend Express | `cd backend && npm run dev` |
+| Integraciones | [`docs/INTEGRATIONS.md`](./docs/INTEGRATIONS.md) |
 
 ### Identificadores
 
-IDs legibles tipo texto (`user-sofia`, `subject-calculo`) para facilitar la demo y el seed.
+Supabase y Express usan los mismos UUIDs fijos del seed (p. ej. Sofía
+`00000000-0000-4000-8000-000000000001`).

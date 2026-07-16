@@ -11,7 +11,7 @@ import {
   listUsers,
 } from '../db/store.js';
 import { computeCompatibility, orderedPair } from '../services/compatibility.js';
-import { mapMatch, mapSwipe, mapUser, newId } from '../utils/mappers.js';
+import { mapMatch, mapSwipe, mapUser } from '../utils/mappers.js';
 
 const router = Router();
 
@@ -78,7 +78,6 @@ export async function registerSwipe(req, res) {
     if (existing) return res.status(409).json({ error: 'Swipe duplicado' });
 
     const swipe = await createSwipe({
-      id: newId('swipe'),
       actor_id: actorId,
       target_id: targetId,
       decision,
@@ -99,7 +98,6 @@ export async function registerSwipe(req, res) {
           match = mapMatch(existingMatch);
         } else {
           const created = await createMatch({
-            id: newId('match'),
             ...pair,
             score,
             reasons,

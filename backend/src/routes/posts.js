@@ -1,12 +1,16 @@
 import { Router } from 'express';
 import { createPost, httpError, listPosts } from '../db/store.js';
-import { mapPost, newId } from '../utils/mappers.js';
+import { mapPost } from '../utils/mappers.js';
 
 const router = Router();
 
 router.get('/', async (req, res) => {
   try {
-    const posts = await listPosts({ subject: req.query.subject, q: req.query.q });
+    const posts = await listPosts({
+      subject: req.query.subject,
+      q: req.query.q,
+      authorId: req.query.authorId,
+    });
     return res.json({
       posts: posts.map((row) => mapPost(row, row.author, row.subject)),
     });
@@ -25,12 +29,11 @@ router.post('/', async (req, res) => {
       });
     }
 
-    if (!['photo', 'video'].includes(type)) {
-      return res.status(400).json({ error: 'type debe ser photo o video' });
+    if (!['foto', 'video'].includes(type)) {
+      return res.status(400).json({ error: 'type debe ser foto o video' });
     }
 
     const data = await createPost({
-      id: newId('post'),
       author_id: authorId,
       subject_id: subjectId,
       type,

@@ -1,7 +1,10 @@
 # Backend — StudyMatch
 
-API Express + Supabase del MVP. Este directorio contiene los entregables de Antonio:
-modelos SQL, datos semilla, lógica de negocio y endpoints.
+API Express + Supabase del MVP. Contiene la lógica de negocio, endpoints,
+pruebas y el script que aplica el esquema y los datos semilla de Antonio.
+
+El esquema canónico está en `../supabase/migrations/` y los datos demo en
+`../supabase/seed.sql`. La API no mantiene un esquema duplicado.
 
 ## Requisitos (una sola vez)
 
@@ -34,6 +37,7 @@ Eso crea tablas y datos semilla **sin usar el SQL Editor**.
 
 ```bash
 npm run dev
+npm test
 ```
 
 La ejecución local solo sirve para validar la API. La configuración y el despliegue
@@ -41,4 +45,5 @@ en Vercel corresponden al responsable full stack.
 
 ## Endpoints
 
-Ver `SPECS.md` §8. Usuario demo: `user-sofia`.
+Ver `../SPECS.md` §8. Perfil demo de Sofía:
+`00000000-0000-4000-8000-000000000001`.

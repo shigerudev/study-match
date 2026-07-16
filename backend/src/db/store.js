@@ -1,104 +1,183 @@
-import { memory, supabase, usingMemory } from './supabase.js';
+import { supabase } from './supabase.js';
 
-function notFound(entity) {
-  const err = new Error(`${entity} no encontrado`);
-  err.status = 404;
-  throw err;
+const PROFILE_SELECT = `
+  *,
+  profile_subjects (
+    level,
+    is_teaching,
+    subject:subjects (id, name, slug, color)
+  )
+`;
+
+const POST_SELECT = `
+  *,
+  author:profiles!posts_author_id_fkey (
+    *,
+    profile_subjects (
+      level,
+      is_teaching,
+      subject:subjects (id, name, slug, color)
+    )
+  ),
+  subject:subjects!posts_subject_id_fkey (id, name, slug, color)
+`;
+
+function dbError(error) {
+  const statusByCode = {
+    '22P02': 400,
+    '23503': 400,
+    '23505': 409,
+  };
+  return Object.assign(new Error(error.message), {
+    status: statusByCode[error.code] ?? 500,
+  });
+}
+
+function assertNoError(error) {
+  if (error) throw dbError(error);
+}
+
+function normalizeProfile(row) {
+  if (!row) return null;
+
+  const subjectDetails = (row.profile_subjects ?? [])
+    .filter((item) => item.subject)
+    .map((item) => ({
+      id: item.subject.id,
+      name: item.subject.name,
+      slug: item.subject.slug,
+      color: item.subject.color,
+      level: item.level,
+      isTeaching: item.is_teaching,
+    }));
+
+  return {
+    ...row,
+    subjects: subjectDetails.map((subject) => subject.name),
+    subjectDetails,
+  };
 }
 
 export async function listSubjects() {
-  if (usingMemory) {
-    return [...memory.subjects].sort((a, b) => a.name.localeCompare(b.name));
-  }
-  const { data, error } = await supabase.from('subjects').select('*').order('name');
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
-  return data;
+  const { data, error } = await supabase
+    .from('subjects')
+    .select('*')
+    .order('name', { ascending: true });
+  assertNoError(error);
+  return data ?? [];
 }
 
 export async function getUser(id) {
-  if (usingMemory) {
-    return memory.users.find((u) => u.id === id) ?? null;
-  }
-  const { data, error } = await supabase.from('users').select('*').eq('id', id).maybeSingle();
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
-  return data;
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(PROFILE_SELECT)
+    .eq('id', id)
+    .maybeSingle();
+  assertNoError(error);
+  return normalizeProfile(data);
+}
+
+async function resolveSubjects(subjects) {
+  const { data, error } = await supabase.from('subjects').select('id, name');
+  assertNoError(error);
+
+  const available = data ?? [];
+  return subjects.map((subject) => {
+    const input = typeof subject === 'string' ? { id: subject, name: subject } : subject;
+    const found = available.find(
+      (candidate) =>
+        candidate.id === input.id ||
+        candidate.name.toLowerCase() === String(input.name ?? '').toLowerCase(),
+    );
+
+    if (!found) {
+      throw Object.assign(new Error(`Materia no encontrada: ${input.name ?? input.id}`), {
+        status: 400,
+      });
+    }
+
+    const level = Number(input.level ?? 3);
+    if (!Number.isInteger(level) || level < 1 || level > 5) {
+      throw Object.assign(new Error('El nivel de materia debe estar entre 1 y 5'), {
+        status: 400,
+      });
+    }
+
+    return {
+      subject_id: found.id,
+      level,
+      is_teaching: Boolean(input.isTeaching),
+    };
+  });
 }
 
 export async function updateUser(id, updates) {
-  if (usingMemory) {
-    const idx = memory.users.findIndex((u) => u.id === id);
-    if (idx < 0) return null;
-    memory.users[idx] = { ...memory.users[idx], ...updates };
-    return memory.users[idx];
+  const current = await getUser(id);
+  if (!current) return null;
+
+  const { subjects, ...profileUpdates } = updates;
+
+  if (Object.keys(profileUpdates).length) {
+    const { error } = await supabase.from('profiles').update(profileUpdates).eq('id', id);
+    assertNoError(error);
   }
-  const { data, error } = await supabase
-    .from('users')
-    .update(updates)
-    .eq('id', id)
-    .select('*')
-    .maybeSingle();
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
-  return data;
+
+  if (subjects) {
+    const resolved = await resolveSubjects(subjects);
+
+    const { error: deleteError } = await supabase
+      .from('profile_subjects')
+      .delete()
+      .eq('profile_id', id);
+    assertNoError(deleteError);
+
+    const { error: insertError } = await supabase.from('profile_subjects').insert(
+      resolved.map((subject) => ({
+        profile_id: id,
+        ...subject,
+      })),
+    );
+    assertNoError(insertError);
+  }
+
+  return getUser(id);
 }
 
-export async function listPosts({ subject, q } = {}) {
-  if (usingMemory) {
-    let posts = memory.posts
-      .filter((p) => p.status === 'publicada')
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .map((p) => ({
-        ...p,
-        author: memory.users.find((u) => u.id === p.author_id),
-        subject: memory.subjects.find((s) => s.id === p.subject_id),
-      }));
-
-    if (subject && subject !== 'Todo') {
-      posts = posts.filter((p) => p.subject?.name?.toLowerCase() === String(subject).toLowerCase());
-    }
-    if (q && String(q).trim()) {
-      const term = String(q).trim().toLowerCase();
-      posts = posts.filter((post) => {
-        const haystack = [
-          post.title,
-          post.description,
-          ...(post.tags ?? []),
-          post.subject?.name,
-          post.author?.name,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return haystack.includes(term);
-      });
-    }
-    return posts;
-  }
-
+export async function listPosts({ subject, q, authorId } = {}) {
   let query = supabase
     .from('posts')
-    .select('*, author:users!author_id(*), subject:subjects!subject_id(*)')
+    .select(POST_SELECT)
     .eq('status', 'publicada')
     .order('created_at', { ascending: false });
 
+  if (authorId) {
+    query = query.eq('author_id', authorId);
+  }
+
   if (subject && subject !== 'Todo') {
-    const { data: subjects, error: subjectError } = await supabase
+    const { data: matchedSubjects, error } = await supabase
       .from('subjects')
-      .select('id, name')
+      .select('id')
       .ilike('name', subject);
-    if (subjectError) throw Object.assign(new Error(subjectError.message), { status: 500 });
-    const ids = (subjects ?? []).map((s) => s.id);
+    assertNoError(error);
+
+    const ids = (matchedSubjects ?? []).map((item) => item.id);
     if (!ids.length) return [];
     query = query.in('subject_id', ids);
   }
 
   const { data, error } = await query;
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
+  assertNoError(error);
 
-  let posts = data ?? [];
+  let posts = (data ?? []).map((post) => ({
+    ...post,
+    author: normalizeProfile(post.author),
+  }));
+
   if (q && String(q).trim()) {
     const term = String(q).trim().toLowerCase();
-    posts = posts.filter((post) => {
-      const haystack = [
+    posts = posts.filter((post) =>
+      [
         post.title,
         post.description,
         ...(post.tags ?? []),
@@ -107,181 +186,159 @@ export async function listPosts({ subject, q } = {}) {
       ]
         .filter(Boolean)
         .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
-    });
+        .toLowerCase()
+        .includes(term),
+    );
   }
+
   return posts;
 }
 
+export async function listSavedPostsForUser(userId) {
+  const { data, error } = await supabase
+    .from('saved_posts')
+    .select(`created_at, post:posts!saved_posts_post_id_fkey (${POST_SELECT})`)
+    .eq('profile_id', userId)
+    .order('created_at', { ascending: false });
+  assertNoError(error);
+
+  return (data ?? [])
+    .filter((item) => item.post)
+    .map((item) => ({
+      ...item.post,
+      saved_at: item.created_at,
+      author: normalizeProfile(item.post.author),
+    }));
+}
+
 export async function createPost(row) {
-  if (usingMemory) {
-    const post = { ...row, status: 'publicada', created_at: new Date().toISOString() };
-    memory.posts.unshift(post);
-    return {
-      ...post,
-      author: memory.users.find((u) => u.id === post.author_id),
-      subject: memory.subjects.find((s) => s.id === post.subject_id),
-    };
-  }
   const { data, error } = await supabase
     .from('posts')
     .insert(row)
-    .select('*, author:users!author_id(*), subject:subjects!subject_id(*)')
+    .select(POST_SELECT)
     .single();
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
-  return data;
+  assertNoError(error);
+  return {
+    ...data,
+    author: normalizeProfile(data.author),
+  };
 }
 
 export async function listUsers() {
-  if (usingMemory) return [...memory.users];
-  const { data, error } = await supabase.from('users').select('*').order('name');
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
-  return data ?? [];
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(PROFILE_SELECT)
+    .order('name', { ascending: true });
+  assertNoError(error);
+  return (data ?? []).map(normalizeProfile);
 }
 
 export async function listSwipesByActor(actorId) {
-  if (usingMemory) return memory.swipes.filter((s) => s.actor_id === actorId);
-  const { data, error } = await supabase.from('swipes').select('*').eq('actor_id', actorId);
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
+  const { data, error } = await supabase
+    .from('swipes')
+    .select('*')
+    .eq('actor_id', actorId);
+  assertNoError(error);
   return data ?? [];
 }
 
 export async function findSwipe(actorId, targetId) {
-  if (usingMemory) {
-    return memory.swipes.find((s) => s.actor_id === actorId && s.target_id === targetId) ?? null;
-  }
   const { data, error } = await supabase
     .from('swipes')
     .select('*')
     .eq('actor_id', actorId)
     .eq('target_id', targetId)
     .maybeSingle();
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
+  assertNoError(error);
   return data;
 }
 
 export async function createSwipe(row) {
-  if (usingMemory) {
-    const swipe = { ...row, created_at: new Date().toISOString() };
-    memory.swipes.push(swipe);
-    return swipe;
-  }
   const { data, error } = await supabase.from('swipes').insert(row).select('*').single();
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
+  assertNoError(error);
   return data;
 }
 
 export async function findMatchPair(userAId, userBId) {
-  if (usingMemory) {
-    return (
-      memory.matches.find((m) => m.user_a_id === userAId && m.user_b_id === userBId) ?? null
-    );
-  }
   const { data, error } = await supabase
     .from('matches')
     .select('*')
     .eq('user_a_id', userAId)
     .eq('user_b_id', userBId)
     .maybeSingle();
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
+  assertNoError(error);
   return data;
 }
 
 export async function createMatch(row) {
-  if (usingMemory) {
-    const match = { ...row, created_at: new Date().toISOString() };
-    memory.matches.push(match);
-    return match;
-  }
   const { data, error } = await supabase.from('matches').insert(row).select('*').single();
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
+  assertNoError(error);
   return data;
 }
 
 export async function listMatchesForUser(userId) {
-  if (usingMemory) {
-    return memory.matches
-      .filter((m) => m.status === 'activo' && (m.user_a_id === userId || m.user_b_id === userId))
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  }
   const { data, error } = await supabase
     .from('matches')
     .select('*')
     .eq('status', 'activo')
     .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`)
     .order('created_at', { ascending: false });
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
+  assertNoError(error);
   return data ?? [];
 }
 
 export async function getMatch(id) {
-  if (usingMemory) return memory.matches.find((m) => m.id === id) ?? null;
-  const { data, error } = await supabase.from('matches').select('*').eq('id', id).maybeSingle();
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
+  const { data, error } = await supabase
+    .from('matches')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  assertNoError(error);
   return data;
 }
 
 export async function createSession(row) {
-  if (usingMemory) {
-    const session = { ...row, created_at: new Date().toISOString() };
-    memory.sessions.push(session);
-    return session;
-  }
-  const { data, error } = await supabase.from('sessions').insert(row).select('*').single();
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
+  const { data, error } = await supabase
+    .from('study_sessions')
+    .insert(row)
+    .select('*')
+    .single();
+  assertNoError(error);
   return data;
 }
 
 export async function updateSession(id, updates) {
-  if (usingMemory) {
-    const idx = memory.sessions.findIndex((s) => s.id === id);
-    if (idx < 0) return null;
-    memory.sessions[idx] = { ...memory.sessions[idx], ...updates };
-    return memory.sessions[idx];
-  }
   const { data, error } = await supabase
-    .from('sessions')
+    .from('study_sessions')
     .update(updates)
     .eq('id', id)
     .select('*')
     .maybeSingle();
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
+  assertNoError(error);
   return data;
 }
 
 export async function listSessionsForUser(userId) {
-  if (usingMemory) {
-    const matchIds = new Set(
-      memory.matches
-        .filter((m) => m.user_a_id === userId || m.user_b_id === userId)
-        .map((m) => m.id),
-    );
-    return memory.sessions
-      .filter((s) => matchIds.has(s.match_id))
-      .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
-  }
-
   const { data: matches, error: matchesError } = await supabase
     .from('matches')
     .select('id')
     .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
-  if (matchesError) throw Object.assign(new Error(matchesError.message), { status: 500 });
-  const matchIds = (matches ?? []).map((m) => m.id);
+  assertNoError(matchesError);
+
+  const matchIds = (matches ?? []).map((match) => match.id);
   if (!matchIds.length) return [];
 
   const { data, error } = await supabase
-    .from('sessions')
+    .from('study_sessions')
     .select('*')
     .in('match_id', matchIds)
     .order('scheduled_at', { ascending: true });
-  if (error) throw Object.assign(new Error(error.message), { status: 500 });
+  assertNoError(error);
   return data ?? [];
 }
 
-export function httpError(res, err) {
-  const status = err.status || 500;
-  return res.status(status).json({ error: err.message || 'Error interno' });
+export function httpError(res, error) {
+  return res.status(error.status ?? 500).json({
+    error: error.message || 'Error interno del servidor',
+  });
 }
-
-export { notFound };

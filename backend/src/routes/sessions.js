@@ -6,7 +6,7 @@ import {
   listSessionsForUser,
   updateSession,
 } from '../db/store.js';
-import { mapSession, newId } from '../utils/mappers.js';
+import { mapSession } from '../utils/mappers.js';
 
 const router = Router();
 
@@ -28,6 +28,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'modality debe ser virtual o presencial' });
     }
 
+    if (Number.isNaN(Date.parse(scheduledAt))) {
+      return res.status(400).json({ error: 'scheduledAt debe ser una fecha válida' });
+    }
+
     const match = await getMatch(matchId);
     if (!match) return res.status(404).json({ error: 'Match no encontrado' });
 
@@ -36,7 +40,6 @@ router.post('/', async (req, res) => {
     }
 
     const data = await createSession({
-      id: newId('session'),
       match_id: matchId,
       proposer_id: proposerId,
       scheduled_at: scheduledAt,
@@ -53,7 +56,7 @@ router.post('/', async (req, res) => {
 
 router.patch('/:id', async (req, res) => {
   try {
-    const { status, scheduledAt, durationMinutes, modality } = req.body ?? {};
+    const { status, scheduledAt, durationMinutes, modality, changeNote } = req.body ?? {};
     const updates = {};
 
     if (status !== undefined) {
@@ -64,7 +67,12 @@ router.patch('/:id', async (req, res) => {
       updates.status = status;
     }
 
-    if (scheduledAt !== undefined) updates.scheduled_at = scheduledAt;
+    if (scheduledAt !== undefined) {
+      if (Number.isNaN(Date.parse(scheduledAt))) {
+        return res.status(400).json({ error: 'scheduledAt debe ser una fecha válida' });
+      }
+      updates.scheduled_at = scheduledAt;
+    }
     if (durationMinutes !== undefined) {
       if (![30, 60].includes(Number(durationMinutes))) {
         return res.status(400).json({ error: 'durationMinutes debe ser 30 o 60' });
@@ -77,13 +85,22 @@ router.patch('/:id', async (req, res) => {
       }
       updates.modality = modality;
     }
+    if (changeNote !== undefined) {
+      if (typeof changeNote !== 'string' || changeNote.length > 500) {
+        return res.status(400).json({ error: 'changeNote debe tener máximo 500 caracteres' });
+      }
+      updates.change_note = changeNote;
+    }
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'No hay campos para actualizar' });
     }
 
     if (
-      (scheduledAt !== undefined || durationMinutes !== undefined || modality !== undefined) &&
+      (scheduledAt !== undefined ||
+        durationMinutes !== undefined ||
+        modality !== undefined ||
+        changeNote !== undefined) &&
       status === undefined
     ) {
       updates.status = 'cambio_propuesto';

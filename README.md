@@ -101,7 +101,7 @@ Priorizamos una experiencia de demostración completa: crear perfil, explorar un
 | Frontend | Next.js + TypeScript |
 | Backend API | Node.js + Express (`backend/`) |
 | Base de datos | Supabase (PostgreSQL) |
-| Esquema / seed | `backend/sql/` + `npm run db:setup` |
+| Esquema / seed canónicos | `supabase/migrations/` + `supabase/seed.sql` |
 | Despliegue | Vercel (responsable full stack) |
 
 ## Demo

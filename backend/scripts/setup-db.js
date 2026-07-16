@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const root = path.join(__dirname, '..');
+const repositoryRoot = path.join(__dirname, '..', '..');
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -19,7 +19,7 @@ const client = new pg.Client({
 });
 
 async function runFile(relativePath) {
-  const fullPath = path.join(root, relativePath);
+  const fullPath = path.join(repositoryRoot, relativePath);
   const sql = fs.readFileSync(fullPath, 'utf8');
   console.log(`Ejecutando ${relativePath}...`);
   await client.query(sql);
@@ -28,8 +28,8 @@ async function runFile(relativePath) {
 
 async function main() {
   await client.connect();
-  await runFile('sql/schema.sql');
-  await runFile('sql/seed.sql');
+  await runFile('supabase/migrations/202607160001_initial_schema.sql');
+  await runFile('supabase/seed.sql');
   console.log('Base de datos lista.');
 }
 
