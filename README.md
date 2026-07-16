@@ -92,6 +92,7 @@ Priorizamos una experiencia de demostración completa: crear perfil, explorar un
 - [Especificación funcional y técnica del MVP](./SPECS.md)
 - [Reglas de desarrollo guiado por especificaciones](./RULES.md)
 - [Instrucciones para agentes](./AGENTS.md)
+- [Configuración de MCP, API y despliegue](./docs/INTEGRATIONS.md)
 
 ## Tecnologías
 
