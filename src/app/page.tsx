@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   Bell,
@@ -74,9 +75,15 @@ export default function HomePage() {
       <section className="mx-auto min-h-screen max-w-[480px] bg-[#0e0e10] pb-24">
         <header className="sticky top-0 z-20 bg-[#0e0e10]/95 px-4 pb-3 pt-5 backdrop-blur">
           <div className="flex items-center justify-between gap-3">
-            <Link href="/home" className="inline-flex items-center gap-2" aria-label="Inicio de StudyMatch">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-[#ff7465] text-base font-black shadow-lg shadow-violet-950/50">S</span>
-              <span className="text-xl font-bold tracking-tight">StudyMatch</span>
+            <Link href="/home" className="inline-flex h-11 items-center" aria-label="Inicio de StudyMatch">
+              <Image
+                src="/brand/studymatch-logo.png"
+                alt="StudyMatch"
+                width={132}
+                height={44}
+                priority
+                className="h-11 w-[132px] object-contain object-left"
+              />
             </Link>
             <button type="button" aria-label="Ver notificaciones" className="grid h-10 w-10 place-items-center rounded-full text-zinc-100 hover:bg-white/10">
               <Bell size={21} />
