@@ -87,6 +87,12 @@ En la parte superior de Inicio habrá una **búsqueda global** para encontrar cl
 
 Priorizamos una experiencia de demostración completa: crear perfil, explorar un feed por clases, crear una publicación simulada, recibir matches, agendar una sesión y descubrir un video. Las notificaciones en tiempo real, videollamadas, moderación avanzada, carga real de archivos y pagos quedan fuera del MVP inicial.
 
+## Documentación del proyecto
+
+- [Especificación funcional y técnica del MVP](./SPECS.md)
+- [Reglas de desarrollo guiado por especificaciones](./RULES.md)
+- [Instrucciones para agentes](./AGENTS.md)
+
 ## Tecnologías
 
 > Pendiente de definir por el equipo durante la hackatón.
