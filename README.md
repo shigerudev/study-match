@@ -77,11 +77,11 @@ En la parte superior de Inicio habrá una **búsqueda global** para encontrar cl
 
 ## Roles en el equipo
 
-| Integrante | Rol | Responsabilidad |
+| Persona | Responsabilidad principal | Entregables |
 | --- | --- | --- |
-| Emily | Diseñadora gráfica | Identidad visual, experiencia de usuario y prototipos. |
-| Antonio | Back-end developer | API, modelo de datos y lógica de matching. |
-| Hugo | Full-stack developer | Interfaz, integración con API y despliegue. |
+| **Emily — Diseño** | UX/UI y contenido visual | Flujo en Figma, diseño de Inicio, Crear, Match y Perfil; paleta, componentes, avatares, miniaturas y datos ficticios para demo. |
+| **Antonio — Back end** | API, base de datos y lógica | Modelos de usuarios, publicaciones, clases, matches y sesiones; endpoints para feed, perfil, swipe, match y agenda; datos semilla. |
+| **Hugo — Full stack** | Frontend, integración y demo | App responsive, navegación inferior, búsqueda/categorías, feed, pantalla de creación, Match tipo Tinder y conexión con API. |
 
 ## Alcance de la hackatón
 
