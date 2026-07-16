@@ -9,6 +9,7 @@ import {
   listMatchesForUser,
   listSwipesByActor,
   listUsers,
+  updateMatch,
 } from '../db/store.js';
 import { computeCompatibility, orderedPair } from '../services/compatibility.js';
 import { mapMatch, mapSwipe, mapUser } from '../utils/mappers.js';
@@ -23,12 +24,19 @@ router.get('/discover', async (req, res) => {
     const actor = await getUser(userId);
     if (!actor) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-    const swipes = await listSwipesByActor(userId);
+    const [swipes, matches, candidates] = await Promise.all([
+      listSwipesByActor(userId),
+      listMatchesForUser(userId),
+      listUsers(),
+    ]);
+
     const seen = new Set(swipes.map((s) => s.target_id));
     seen.add(userId);
+    for (const match of matches) {
+      seen.add(match.user_a_id === userId ? match.user_b_id : match.user_a_id);
+    }
 
-    const candidates = await listUsers();
-    const next = candidates.find((u) => !seen.has(u.id));
+    const next = candidates.find((candidate) => !seen.has(candidate.id));
     if (!next) return res.json({ card: null, message: 'No hay más perfiles' });
 
     const { score, reasons } = computeCompatibility(actor, next);
@@ -94,8 +102,13 @@ export async function registerSwipe(req, res) {
         const existingMatch = await findMatchPair(pair.user_a_id, pair.user_b_id);
 
         if (existingMatch) {
+          const refreshed = await updateMatch(existingMatch.id, {
+            score,
+            reasons,
+            status: 'activo',
+          });
           isMatch = true;
-          match = mapMatch(existingMatch);
+          match = mapMatch(refreshed);
         } else {
           const created = await createMatch({
             ...pair,

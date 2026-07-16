@@ -12,7 +12,7 @@ const sofia = {
   availability: ['tarde', 'sabado'],
 };
 
-test('calcula las cuatro señales de compatibilidad', () => {
+test('calcula las cuatro señales de compatibilidad como match_score', () => {
   const maria = {
     subjects: ['Cálculo', 'Programación'],
     subjectDetails: [
@@ -26,8 +26,12 @@ test('calcula las cuatro señales de compatibilidad', () => {
   const result = computeCompatibility(sofia, maria);
 
   assert.equal(result.score, 100);
-  assert.equal(result.reasons.length, 4);
-  assert.match(result.reasons[0], /Cálculo/);
+  assert.deepEqual(result.reasons, [
+    'Coinciden en Cálculo',
+    'Tienen un objetivo de estudio en común',
+    'Comparten disponibilidad',
+    'Sus niveles son compatibles',
+  ]);
 });
 
 test('devuelve cero y una razón cuando no hay señales', () => {

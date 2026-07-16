@@ -26,9 +26,27 @@ async function runFile(relativePath) {
   console.log(`OK ${relativePath}`);
 }
 
+async function schemaExists() {
+  const { rows } = await client.query(`
+    select exists (
+      select 1
+      from information_schema.tables
+      where table_schema = 'public' and table_name = 'profiles'
+    ) as ready
+  `);
+  return Boolean(rows[0]?.ready);
+}
+
 async function main() {
   await client.connect();
-  await runFile('supabase/migrations/202607160001_initial_schema.sql');
+
+  const alreadyMigrated = await schemaExists();
+  if (alreadyMigrated) {
+    console.log('Esquema detectado: se omite la migración y solo se aplica el seed.');
+  } else {
+    await runFile('supabase/migrations/202607160001_initial_schema.sql');
+  }
+
   await runFile('supabase/seed.sql');
   console.log('Base de datos lista.');
 }

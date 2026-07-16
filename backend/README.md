@@ -31,7 +31,8 @@ npm install
 npm run db:setup
 ```
 
-Eso crea tablas y datos semilla **sin usar el SQL Editor**.
+Eso aplica la migración canónica si el esquema aún no existe y siempre
+reaplica el seed idempotente de `../supabase/seed.sql`.
 
 ## Validación del backend
 

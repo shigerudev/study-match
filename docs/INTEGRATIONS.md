@@ -34,6 +34,23 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - Usar buckets separados para `avatars` y `posts`.
 - Cuando exista el proyecto, actualizar la URL MCP de Supabase con `project_ref` para limitar el acceso a StudyMatch.
 
+## API Express (`backend/`)
+
+La API de Antonio usa el mismo esquema canónico de `supabase/` con la clave
+`service_role` (solo servidor). Perfil demo de Sofía:
+`00000000-0000-4000-8000-000000000001`.
+
+```bash
+cd backend
+cp .env.example .env
+npm install
+npm run db:setup
+npm run dev
+```
+
+Variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` y `DATABASE_URL`
+(solo para `db:setup`). Detalle en [`backend/README.md`](../backend/README.md).
+
 ## Vercel
 
 1. Autorizar el MCP de Vercel.

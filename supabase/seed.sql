@@ -12,7 +12,7 @@ on conflict (id) do update set name = excluded.name, slug = excluded.slug, color
 insert into public.profiles (id, name, avatar_url, role, bio, career, goals, availability) values
   ('00000000-0000-4000-8000-000000000001', 'Sofía Martínez', 'https://i.pravatar.cc/300?img=47', 'estudiante', 'Estudio Ingeniería y aprendo mejor resolviendo ejercicios en equipo.', 'Ingeniería en Sistemas', array['Aprobar Cálculo I', 'Practicar inglés'], '["tarde", "sabado"]'),
   ('00000000-0000-4000-8000-000000000002', 'María López', 'https://i.pravatar.cc/300?img=32', 'ambos', 'Mentora de cálculo. Me gustan las sesiones cortas con ejercicios prácticos.', 'Ingeniería Industrial', array['Aprobar Cálculo I', 'Enseñar cálculo'], '["tarde", "martes"]'),
-  ('00000000-0000-4000-8000-000000000003', 'Carlos Reyes', 'https://i.pravatar.cc/300?img=12', 'profesor', 'Profesor de física y programación para principiantes.', 'Docencia Universitaria', array['Enseñar física', 'Crear comunidad'], '["manana", "jueves"]'),
+  ('00000000-0000-4000-8000-000000000003', 'Carlos Reyes', 'https://i.pravatar.cc/300?img=12', 'profesor', 'Profesor de física, cálculo y programación para principiantes.', 'Docencia Universitaria', array['Enseñar física', 'Crear comunidad'], '["tarde", "jueves"]'),
   ('00000000-0000-4000-8000-000000000004', 'Lucía Pérez', 'https://i.pravatar.cc/300?img=44', 'estudiante', 'Busco compañeros para practicar conversación en inglés.', 'Comunicación', array['Practicar inglés', 'Hablar con fluidez'], '["noche", "viernes"]'),
   ('00000000-0000-4000-8000-000000000005', 'Diego Ramos', 'https://i.pravatar.cc/300?img=68', 'ambos', 'Diseñador y desarrollador; comparto recursos visuales.', 'Diseño Digital', array['Aprender programación', 'Compartir recursos'], '["tarde", "domingo"]')
 on conflict (id) do update set
@@ -24,6 +24,7 @@ insert into public.profile_subjects (profile_id, subject_id, level, is_teaching)
   ('00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000102', 3, false),
   ('00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000101', 3, true),
   ('00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000104', 3, false),
+  ('00000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000101', 3, true),
   ('00000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000103', 5, true),
   ('00000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000104', 4, true),
   ('00000000-0000-4000-8000-000000000004', '00000000-0000-4000-8000-000000000102', 3, false),
@@ -44,14 +45,31 @@ insert into public.saved_posts (profile_id, post_id) values
   ('00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000201')
 on conflict (profile_id, post_id) do nothing;
 
--- María ya indicó interés en Sofía; el like de Sofía hacia María crea el match en la demo.
+-- María ya dio like a Sofía; Lucía queda omitida para que el guion sea: omitir Diego → like a María.
 insert into public.swipes (actor_id, target_id, decision) values
-  ('00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000001', 'like')
+  ('00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000001', 'like'),
+  ('00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000004', 'skip'),
+  ('00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000003', 'like'),
+  ('00000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000001', 'like')
 on conflict (actor_id, target_id) do update set decision = excluded.decision;
 
-insert into public.matches (id, user_a_id, user_b_id, score, reasons, status) values
-  ('00000000-0000-4000-8000-000000000301', '00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000003', 40, array['Interés académico complementario'], 'activo')
-on conflict (user_a_id, user_b_id) do update set score = excluded.score, reasons = excluded.reasons, status = excluded.status;
+-- Match Sofía ↔ Carlos con score real de match_score (Cálculo + disponibilidad + nivel = 80).
+insert into public.matches (id, user_a_id, user_b_id, score, reasons, status)
+select
+  '00000000-0000-4000-8000-000000000301',
+  '00000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000003',
+  ms.score,
+  ms.reasons,
+  'activo'
+from public.match_score(
+  '00000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000003'
+) ms
+on conflict (user_a_id, user_b_id) do update
+  set score = excluded.score,
+      reasons = excluded.reasons,
+      status = excluded.status;
 
 insert into public.study_sessions (id, match_id, proposer_id, scheduled_at, duration_minutes, modality, status) values
   ('00000000-0000-4000-8000-000000000401', '00000000-0000-4000-8000-000000000301', '00000000-0000-4000-8000-000000000001', '2026-07-18 16:00:00+00', 60, 'virtual', 'pendiente'),

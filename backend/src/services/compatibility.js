@@ -1,20 +1,22 @@
 /**
- * Compatibilidad explicable (SPECS §6), sobre 100:
+ * Compatibilidad explicable (SPECS §6 / public.match_score), sobre 100:
  * materias 40 + objetivo 20 + disponibilidad 25 + nivel 15
  */
 
-function overlap(a = [], b = []) {
+function normalizeAvailability(item) {
+  return typeof item === 'string'
+    ? item.toLowerCase()
+    : String(item.slot ?? item.day ?? '').toLowerCase();
+}
+
+function overlapExactInsensitive(a = [], b = []) {
   const setB = new Set(b.map((x) => String(x).toLowerCase()));
   return a.filter((x) => setB.has(String(x).toLowerCase()));
 }
 
 function availabilityOverlap(a = [], b = []) {
-  const key = (item) =>
-    typeof item === 'string'
-      ? item.toLowerCase()
-      : `${item.day ?? ''}|${item.slot ?? ''}`.toLowerCase();
-  const setB = new Set(b.map(key));
-  return a.filter((item) => setB.has(key(item)));
+  const setB = new Set(b.map(normalizeAvailability));
+  return a.filter((item) => setB.has(normalizeAvailability(item)));
 }
 
 function hasCompatibleLevel(actor, target) {
@@ -31,24 +33,22 @@ export function computeCompatibility(actor, target) {
   const reasons = [];
   let score = 0;
 
-  const sharedSubjects = overlap(actor.subjects, target.subjects);
+  const sharedSubjects = overlapExactInsensitive(actor.subjects, target.subjects);
   if (sharedSubjects.length) {
     score += 40;
-    reasons.push(`Coinciden en ${sharedSubjects.slice(0, 2).join(' y ')}`);
+    reasons.push(`Coinciden en ${sharedSubjects.slice(0, 2).join(', ')}`);
   }
 
-  const sharedGoals = overlap(actor.goals, target.goals);
+  const sharedGoals = overlapExactInsensitive(actor.goals, target.goals);
   if (sharedGoals.length) {
     score += 20;
-    reasons.push(`Objetivo: ${sharedGoals[0]}`);
+    reasons.push('Tienen un objetivo de estudio en común');
   }
 
-  const sharedSlots = availabilityOverlap(actor.availability, target.availability);
+  const sharedSlots = availabilityOverlap(actor.availability ?? [], target.availability ?? []);
   if (sharedSlots.length) {
     score += 25;
-    const slot =
-      typeof sharedSlots[0] === 'string' ? sharedSlots[0] : sharedSlots[0].slot;
-    reasons.push(`Disponibilidad compatible: ${slot}`);
+    reasons.push('Comparten disponibilidad');
   }
 
   if (hasCompatibleLevel(actor, target)) {

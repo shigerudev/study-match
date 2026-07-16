@@ -313,11 +313,11 @@ on conflict (id) do update set public = excluded.public;
 create policy "Lectura pública de avatares" on storage.objects for select using (bucket_id = 'avatars');
 create policy "Lectura pública de publicaciones" on storage.objects for select using (bucket_id = 'posts');
 create policy "Usuario sube sus medios" on storage.objects for insert to authenticated
-  with check (bucket_id in ('avatars', 'posts') and owner_id = auth.uid());
+  with check (bucket_id in ('avatars', 'posts') and owner_id = (auth.uid())::text);
 create policy "Usuario actualiza sus medios" on storage.objects for update to authenticated
-  using (bucket_id in ('avatars', 'posts') and owner_id = auth.uid());
+  using (bucket_id in ('avatars', 'posts') and owner_id = (auth.uid())::text);
 create policy "Usuario elimina sus medios" on storage.objects for delete to authenticated
-  using (bucket_id in ('avatars', 'posts') and owner_id = auth.uid());
+  using (bucket_id in ('avatars', 'posts') and owner_id = (auth.uid())::text);
 
 grant usage on schema public to anon, authenticated;
 grant select on public.subjects, public.profiles, public.profile_subjects, public.posts to anon, authenticated;

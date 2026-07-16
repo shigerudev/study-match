@@ -27,6 +27,7 @@ function dbError(error) {
     '22P02': 400,
     '23503': 400,
     '23505': 409,
+    '23514': 400,
   };
   return Object.assign(new Error(error.message), {
     status: statusByCode[error.code] ?? 500,
@@ -272,6 +273,17 @@ export async function findMatchPair(userAId, userBId) {
 
 export async function createMatch(row) {
   const { data, error } = await supabase.from('matches').insert(row).select('*').single();
+  assertNoError(error);
+  return data;
+}
+
+export async function updateMatch(id, updates) {
+  const { data, error } = await supabase
+    .from('matches')
+    .update(updates)
+    .eq('id', id)
+    .select('*')
+    .single();
   assertNoError(error);
   return data;
 }

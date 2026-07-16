@@ -56,8 +56,15 @@ router.patch('/:id', async (req, res) => {
       return res.status(400).json({ error: 'goals debe ser un arreglo' });
     }
 
-    if (updates.availability && (!Array.isArray(updates.availability) || updates.availability.length < 1)) {
-      return res.status(400).json({ error: 'Se requiere al menos un bloque de disponibilidad' });
+    if (updates.availability) {
+      if (!Array.isArray(updates.availability) || updates.availability.length < 1) {
+        return res.status(400).json({ error: 'Se requiere al menos un bloque de disponibilidad' });
+      }
+      if (!updates.availability.every((item) => typeof item === 'string' && item.trim())) {
+        return res.status(400).json({
+          error: 'availability debe ser un arreglo de strings, por ejemplo ["tarde", "sabado"]',
+        });
+      }
     }
 
     const data = await updateUser(req.params.id, updates);

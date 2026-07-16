@@ -33,11 +33,24 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'type debe ser foto o video' });
     }
 
+    const trimmedTitle = String(title).trim();
+    if (trimmedTitle.length < 3 || trimmedTitle.length > 140) {
+      return res.status(400).json({ error: 'title debe tener entre 3 y 140 caracteres' });
+    }
+
+    if (typeof description === 'string' && description.length > 1000) {
+      return res.status(400).json({ error: 'description debe tener máximo 1000 caracteres' });
+    }
+
+    if (tags !== undefined && !Array.isArray(tags)) {
+      return res.status(400).json({ error: 'tags debe ser un arreglo' });
+    }
+
     const data = await createPost({
       author_id: authorId,
       subject_id: subjectId,
       type,
-      title,
+      title: trimmedTitle,
       description,
       tags,
       media_url: mediaUrl,

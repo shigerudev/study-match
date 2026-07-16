@@ -148,7 +148,8 @@ Subject
 
 Profile
   id (uuid), authUserId?, name, avatarUrl, role(estudiante|profesor|ambos),
-  bio, career, goals[], availability (jsonb), createdAt, updatedAt
+  bio, career, goals[], availability (jsonb de strings, p. ej. ["tarde","sabado"]),
+  createdAt, updatedAt
 
 ProfileSubject
   profileId, subjectId, level (1-5), isTeaching
@@ -220,12 +221,17 @@ POST /api/swipes
 
 ```json
 {
-  "swipe": { "id": "swipe-10", "decision": "like" },
+  "swipe": { "id": "uuid", "decision": "like" },
   "isMatch": true,
   "match": {
-    "id": "match-3",
-    "score": 92,
-    "reasons": ["Cálculo I", "Disponibilidad por la tarde"]
+    "id": "uuid",
+    "score": 100,
+    "reasons": [
+      "Coinciden en Cálculo",
+      "Tienen un objetivo de estudio en común",
+      "Comparten disponibilidad",
+      "Sus niveles son compatibles"
+    ]
   }
 }
 ```
@@ -319,7 +325,8 @@ Definidos en [`supabase/seed.sql`](./supabase/seed.sql) (UUIDs fijos):
 - 6 publicaciones: al menos 1 por cada clase visible en categorías.
 - 1 publicación guardada por Sofía para poblar la pestaña Guardados.
 - 1 swipe previo María → Sofía (`like`) para producir match mutuo en la demo.
-- 1 match seed Sofía ↔ Carlos, con 1 sesión `pendiente` y 1 `aceptada`.
+- 1 skip seed Sofía → Lucía para que el guion sea: omitir Diego y dar like a María.
+- 1 match seed Sofía ↔ Carlos calculado con `match_score` (Cálculo + disponibilidad + nivel = 80), con 1 sesión `pendiente` y 1 `aceptada`.
 
 La API Express consume directamente este seed y sus UUIDs.
 
