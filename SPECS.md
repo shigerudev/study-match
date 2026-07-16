@@ -215,6 +215,8 @@ La demo termina con este recorrido, sin errores bloqueantes:
 
 ## 11. Decisiones pendientes
 
-- Framework de frontend y backend.
-- Persistencia: datos en memoria/JSON para demo o base de datos ligera.
-- Fuente de medios de ejemplo y estrategia de carga real posterior.
+- **Frontend y backend:** Next.js con TypeScript; rutas y componentes en el mismo repositorio.
+- **Interfaz:** Tailwind CSS, `lucide-react` para iconos y `motion` para el swipe de Match.
+- **Persistencia:** Supabase (PostgreSQL, Auth y Storage). Mientras se conecta, el frontend usa datos mock.
+- **Despliegue:** Vercel conectado al repositorio GitHub.
+- **Fuente de medios:** recursos ficticios durante la demo; Supabase Storage será la implementación posterior de fotos y videos.
