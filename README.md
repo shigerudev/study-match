@@ -106,4 +106,6 @@ Priorizamos una experiencia de demostración completa: crear perfil, explorar un
 
 ## Demo
 
-Próximamente.
+La versión actual del MVP está desplegada en Vercel:
+
+[Abrir StudyMatch](https://study-match-mp4cusjeq-hugo-arias-projects.vercel.app)
