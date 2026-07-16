@@ -51,6 +51,10 @@ npm run dev
 Variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` y `DATABASE_URL`
 (solo para `db:setup`). Detalle en [`backend/README.md`](../backend/README.md).
 
+Para desplegar la API: en Vercel usa Root Directory `backend` y las dos
+variables Supabase (sin `DATABASE_URL`). Importa
+`backend/StudyMatch.postman_collection.json` para validar el flujo.
+
 ## Vercel
 
 1. Autorizar el MCP de Vercel.

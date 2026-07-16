@@ -67,6 +67,7 @@ Como usuario, quiero registrar mi rol, materias, intereses, objetivos y disponib
 - El perfil permite elegir `estudiante`, `profesor` o `ambos`.
 - Se requiere nombre, al menos una materia y al menos un bloque de disponibilidad.
 - Al guardar, estos datos aparecen en Perfil y se usan para la compatibilidad.
+- En el MVP, los perfiles base llegan por seed; la API Express edita con `PATCH /api/users/:id`. La creación automática vía Auth queda preparada en la migración Supabase.
 
 ### US-02 — Explorar publicaciones
 
@@ -198,6 +199,8 @@ Base local: `http://localhost:3001`.
 | `GET` | `/api/posts?subject=&q=&authorId=` | Obtener feed filtrado; `authorId` permite listar publicaciones del Perfil. |
 | `POST` | `/api/posts` | Crear publicación. |
 | `GET` | `/api/saved-posts?userId=` | Listar publicaciones guardadas del Perfil. |
+| `POST` | `/api/saved-posts` | Guardar una publicación (`userId`, `postId`). |
+| `DELETE` | `/api/saved-posts?userId=&postId=` | Quitar una publicación de Guardados. |
 | `GET` | `/api/subjects` | Listar clases. |
 | `GET` | `/api/users/:id` | Consultar perfil. |
 | `PATCH` | `/api/users/:id` | Editar perfil. |
@@ -312,8 +315,8 @@ Variables: ver [`docs/INTEGRATIONS.md`](./docs/INTEGRATIONS.md).
 | --- | --- |
 | UI Next.js (`/home`, `/classes`, `/create`, `/match`, `/profile`) | Implementada con datos mock en `src/data/` |
 | Esquema + seed Supabase | Listos en `supabase/` |
-| API Express | Lista en `backend/` |
-| Conexión UI → Supabase o Express | Pendiente (mock activo en demo) |
+| API Express | Lista en `backend/` (contrato §8.1 + colección Postman) |
+| Conexión UI → Supabase o Express | Pendiente (mock activo en demo; handoff en `backend/README.md`) |
 
 ## 9. Datos semilla para la demo
 

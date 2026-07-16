@@ -196,20 +196,91 @@ export async function listPosts({ subject, q, authorId } = {}) {
 }
 
 export async function listSavedPostsForUser(userId) {
-  const { data, error } = await supabase
+  const { data: saved, error } = await supabase
     .from('saved_posts')
-    .select(`created_at, post:posts!saved_posts_post_id_fkey (${POST_SELECT})`)
+    .select('created_at, post_id')
     .eq('profile_id', userId)
     .order('created_at', { ascending: false });
   assertNoError(error);
 
-  return (data ?? [])
-    .filter((item) => item.post)
-    .map((item) => ({
-      ...item.post,
-      saved_at: item.created_at,
-      author: normalizeProfile(item.post.author),
-    }));
+  const rows = saved ?? [];
+  if (!rows.length) return [];
+
+  const { data: posts, error: postsError } = await supabase
+    .from('posts')
+    .select(POST_SELECT)
+    .in(
+      'id',
+      rows.map((row) => row.post_id),
+    );
+  assertNoError(postsError);
+
+  const postsById = new Map(
+    (posts ?? []).map((post) => [
+      post.id,
+      {
+        ...post,
+        author: normalizeProfile(post.author),
+      },
+    ]),
+  );
+
+  return rows
+    .map((row) => {
+      const post = postsById.get(row.post_id);
+      if (!post) return null;
+      return {
+        ...post,
+        saved_at: row.created_at,
+      };
+    })
+    .filter(Boolean);
+}
+
+export async function savePost(userId, postId) {
+  const user = await getUser(userId);
+  if (!user) {
+    throw Object.assign(new Error('Usuario no encontrado'), { status: 404 });
+  }
+
+  const { data: post, error: postError } = await supabase
+    .from('posts')
+    .select('id')
+    .eq('id', postId)
+    .maybeSingle();
+  assertNoError(postError);
+  if (!post) {
+    throw Object.assign(new Error('Publicación no encontrada'), { status: 404 });
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .from('saved_posts')
+    .select('created_at, post_id')
+    .eq('profile_id', userId)
+    .eq('post_id', postId)
+    .maybeSingle();
+  assertNoError(existingError);
+  if (existing) return existing;
+
+  const { data, error } = await supabase
+    .from('saved_posts')
+    .insert({ profile_id: userId, post_id: postId })
+    .select('created_at, post_id')
+    .single();
+  assertNoError(error);
+  return data;
+}
+
+export async function unsavePost(userId, postId) {
+  const { data, error } = await supabase
+    .from('saved_posts')
+    .delete()
+    .eq('profile_id', userId)
+    .eq('post_id', postId)
+    .select('post_id')
+    .maybeSingle();
+  assertNoError(error);
+  return data;
 }
 
 export async function createPost(row) {

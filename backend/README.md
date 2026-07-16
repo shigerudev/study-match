@@ -49,6 +49,17 @@ en Vercel corresponden al responsable full stack.
 Ver `../SPECS.md` §8. Perfil demo de Sofía:
 `00000000-0000-4000-8000-000000000001`.
 
+## Despliegue (Hugo)
+
+La app exporta Express desde `src/index.js` y no escucha puerto cuando
+`VERCEL=1`. En Vercel, usa **Root Directory** = `backend` y configura:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Luego apunta el frontend a la URL pública con, por ejemplo,
+`NEXT_PUBLIC_API_URL`.
+
 ## Colección para integración
 
 Importa `StudyMatch.postman_collection.json` en Postman y ejecuta las requests

@@ -11,6 +11,7 @@
     { "key": "mariaId", "value": "00000000-0000-4000-8000-000000000002" },
     { "key": "diegoId", "value": "00000000-0000-4000-8000-000000000005" },
     { "key": "calculoId", "value": "00000000-0000-4000-8000-000000000101" },
+    { "key": "postId", "value": "00000000-0000-4000-8000-000000000206" },
     { "key": "matchId", "value": "" },
     { "key": "sessionId", "value": "" }
   ],
@@ -178,6 +179,27 @@
           "raw": "{\n  \"authorId\": \"{{sofiaId}}\",\n  \"subjectId\": \"{{calculoId}}\",\n  \"type\": \"foto\",\n  \"title\": \"Resumen de integrales\",\n  \"description\": \"Ejercicio resuelto para la demo\",\n  \"tags\": [\"integrales\", \"calculo\"],\n  \"mediaUrl\": \"https://images.unsplash.com/photo-1509228468518-180dd4864904\"\n}"
         },
         "url": "{{baseUrl}}/api/posts"
+      }
+    },
+    {
+      "name": "15 Guardar publicación",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{sofiaId}}\",\n  \"postId\": \"{{postId}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/saved-posts"
+      }
+    },
+    {
+      "name": "16 Quitar publicación guardada",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/saved-posts?userId={{sofiaId}}&postId={{postId}}"
       }
     }
   ]
