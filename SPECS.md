@@ -169,6 +169,7 @@ Session
 | `GET` | `/api/matches?userId=` | Listar matches activos. |
 | `POST` | `/api/sessions` | Proponer sesión. |
 | `PATCH` | `/api/sessions/:id` | Aceptar, cancelar o proponer cambio. |
+| `GET` | `/api/sessions?userId=` | Listar sesiones del usuario (Perfil). |
 
 ### Ejemplo: registrar swipe
 
@@ -213,10 +214,20 @@ La demo termina con este recorrido, sin errores bloqueantes:
 5. Agenda una sesión virtual de 60 minutos.
 6. Consulta la sesión en Perfil.
 
-## 11. Decisiones pendientes
+## 11. Decisiones técnicas
 
-- **Frontend y backend:** Next.js con TypeScript; rutas y componentes en el mismo repositorio.
-- **Interfaz:** Tailwind CSS, `lucide-react` para iconos y `motion` para el swipe de Match.
-- **Persistencia:** Supabase (PostgreSQL, Auth y Storage). Mientras se conecta, el frontend usa datos mock.
-- **Despliegue:** Vercel conectado al repositorio GitHub.
-- **Fuente de medios:** recursos ficticios durante la demo; Supabase Storage será la implementación posterior de fotos y videos.
+| Tema | Decisión |
+| --- | --- |
+| Frontend | Next.js con TypeScript; Tailwind CSS, `lucide-react` y `motion` |
+| Backend API | Node.js + Express en `backend/` |
+| Persistencia | Supabase (PostgreSQL); Auth y Storage según integración del frontend |
+| Esquema y seed | Scripts SQL en `backend/sql/` + `npm run db:setup` |
+| Arrays del modelo | JSONB (`subjects`, `goals`, `availability`, `tags`, `reasons`) |
+| Auth MVP | Sin autenticación de producción en la API; el cliente envía `userId` en query o body |
+| Despliegue | Vercel; configuración y deploy corresponden al responsable full stack |
+| Medios | URLs de ejemplo en seed; Supabase Storage como implementación posterior |
+| Validación backend | `npm run dev` |
+
+### Identificadores
+
+IDs legibles tipo texto (`user-sofia`, `subject-calculo`) para facilitar la demo y el seed.

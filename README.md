@@ -96,7 +96,13 @@ Priorizamos una experiencia de demostración completa: crear perfil, explorar un
 
 ## Tecnologías
 
-> Pendiente de definir por el equipo durante la hackatón.
+| Capa | Stack |
+| --- | --- |
+| Frontend | Next.js + TypeScript |
+| Backend API | Node.js + Express (`backend/`) |
+| Base de datos | Supabase (PostgreSQL) |
+| Esquema / seed | `backend/sql/` + `npm run db:setup` |
+| Despliegue | Vercel (responsable full stack) |
 
 ## Demo
 
