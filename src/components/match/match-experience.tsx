@@ -56,13 +56,33 @@ export function MatchExperience() {
               <div className={`relative flex h-56 items-end bg-gradient-to-br ${candidate.accent} p-6`}>
                 <div className="absolute right-6 top-6 flex h-14 w-14 items-center justify-center rounded-full border-4 border-white/70 bg-white/20 text-xl font-bold text-white backdrop-blur-sm">{candidate.initials}</div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
-                <div className="relative text-white"><h2 className="text-3xl font-bold">{candidate.name}</h2><p className="mt-1 text-sm font-medium text-white/85">{candidate.role} · {candidate.career}</p></div>
+                <div className="relative text-white">
+                  <h2 className="text-3xl font-bold">{candidate.name}</h2>
+                  <p className="mt-1 text-sm font-medium text-white/85">{candidate.role} · {candidate.career}</p>
+                  <span className="mt-3 inline-flex rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white backdrop-blur-sm">
+                    {candidate.intentLabel}
+                  </span>
+                </div>
               </div>
               <div className="p-6">
-                <div className="mb-5 flex items-center justify-between"><span className="rounded-full bg-violet-100 px-3 py-1.5 text-sm font-bold text-violet-700">{candidate.compatibility}% compatible</span><span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Perfil {index + 1} de {matchCandidates.length}</span></div>
+                <div className="mb-5 flex items-center justify-between">
+                  <span className="rounded-full bg-violet-100 px-3 py-1.5 text-sm font-bold text-violet-700">{candidate.compatibility}% compatible</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Perfil {index + 1} de {matchCandidates.length}</span>
+                </div>
                 <p className="text-[15px] leading-6 text-slate-600">{candidate.bio}</p>
-                <div className="mt-5"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Materias</p><div className="mt-2 flex flex-wrap gap-2">{candidate.subjects.map((subject) => <span key={subject} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">{subject}</span>)}</div></div>
-                <div className="mt-5 space-y-3 rounded-2xl bg-slate-50 p-4 text-sm"><div className="flex gap-3"><Sparkles className="mt-0.5 shrink-0 text-violet-600" size={17} /><p><strong>Objetivo:</strong> {candidate.goal}</p></div><div className="flex gap-3"><CalendarDays className="mt-0.5 shrink-0 text-violet-600" size={17} /><p>{candidate.availability}</p></div><div className="flex gap-3"><MapPin className="mt-0.5 shrink-0 text-violet-600" size={17} /><p>{candidate.reasons.join(" · ")}</p></div></div>
+                <div className="mt-5">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Materias</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {candidate.subjects.map((subject) => (
+                      <span key={subject} className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">{subject}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-5 space-y-3 rounded-2xl bg-slate-50 p-4 text-sm">
+                  <div className="flex gap-3"><Sparkles className="mt-0.5 shrink-0 text-violet-600" size={17} /><p><strong>Objetivo:</strong> {candidate.goal}</p></div>
+                  <div className="flex gap-3"><CalendarDays className="mt-0.5 shrink-0 text-violet-600" size={17} /><p>{candidate.availability}</p></div>
+                  <div className="flex gap-3"><MapPin className="mt-0.5 shrink-0 text-violet-600" size={17} /><p>{candidate.reasons.join(" · ")}</p></div>
+                </div>
               </div>
             </motion.article>
           </AnimatePresence>
