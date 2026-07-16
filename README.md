@@ -95,6 +95,12 @@ Priorizamos una experiencia de demostración completa: crear perfil, explorar un
 - [Configuración de MCP, API y despliegue](./docs/INTEGRATIONS.md)
 - [Backend API y colección Postman](./backend/README.md)
 
+## Identidad visual
+
+- El logo diseñado por **Emily** está incluido en [`public/brand/studymatch-logo.png`](./public/brand/studymatch-logo.png).
+- El encabezado del feed utiliza este asset desde [`src/app/page.tsx`](./src/app/page.tsx).
+- La paleta del proyecto está documentada en [`colores.md`](./colores.md).
+
 ## Tecnologías
 
 | Capa | Stack |
@@ -110,3 +116,5 @@ Priorizamos una experiencia de demostración completa: crear perfil, explorar un
 La versión actual del MVP está desplegada en Vercel:
 
 [Abrir StudyMatch](https://study-match-xi.vercel.app/)
+
+> El repositorio contiene la integración del logo. Para que los cambios más recientes aparezcan en la URL pública, el proyecto de Vercel debe desplegar el commit actual de `main`.
