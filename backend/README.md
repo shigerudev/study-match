@@ -48,3 +48,17 @@ en Vercel corresponden al responsable full stack.
 
 Ver `../SPECS.md` §8. Perfil demo de Sofía:
 `00000000-0000-4000-8000-000000000001`.
+
+## Colección para integración
+
+Importa `StudyMatch.postman_collection.json` en Postman y ejecuta las requests
+en orden. La colección cubre el recorrido completo:
+
+1. health, clases, feed y perfil;
+2. omitir Diego y hacer match con María;
+3. crear y aceptar una sesión;
+4. consultar sesiones, guardados y crear una publicación.
+
+La variable `baseUrl` inicia en `http://localhost:3001`; Hugo puede sustituirla
+por la URL pública del backend. Para repetir el flujo de escritura, ejecuta
+`npm run db:setup` y vuelve a importar/restablecer las variables de la colección.

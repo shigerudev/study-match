@@ -1,0 +1,184 @@
+{
+  "info": {
+    "_postman_id": "a8329594-9443-4f62-a070-e9cae7f63ac1",
+    "name": "StudyMatch Backend MVP",
+    "description": "Flujo de integración: feed → perfil → omitir Diego → match con María → sesión → perfil.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3001" },
+    { "key": "sofiaId", "value": "00000000-0000-4000-8000-000000000001" },
+    { "key": "mariaId", "value": "00000000-0000-4000-8000-000000000002" },
+    { "key": "diegoId", "value": "00000000-0000-4000-8000-000000000005" },
+    { "key": "calculoId", "value": "00000000-0000-4000-8000-000000000101" },
+    { "key": "matchId", "value": "" },
+    { "key": "sessionId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 Health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/health"
+      }
+    },
+    {
+      "name": "02 Listar clases",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/subjects"
+      }
+    },
+    {
+      "name": "03 Feed de Cálculo",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/posts?subject=Cálculo&q="
+      }
+    },
+    {
+      "name": "04 Consultar perfil de Sofía",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/users/{{sofiaId}}"
+      }
+    },
+    {
+      "name": "05 Publicaciones de Sofía",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/posts?authorId={{sofiaId}}"
+      }
+    },
+    {
+      "name": "06 Publicaciones guardadas de Sofía",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/saved-posts?userId={{sofiaId}}"
+      }
+    },
+    {
+      "name": "07 Descubrir Diego",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/matches/discover?userId={{sofiaId}}"
+      }
+    },
+    {
+      "name": "08 Omitir Diego",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"actorId\": \"{{sofiaId}}\",\n  \"targetId\": \"{{diegoId}}\",\n  \"decision\": \"skip\"\n}"
+        },
+        "url": "{{baseUrl}}/api/swipes"
+      }
+    },
+    {
+      "name": "09 Descubrir María",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/matches/discover?userId={{sofiaId}}"
+      }
+    },
+    {
+      "name": "10 Like a María y crear match",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Se creó el match mutuo', function () {",
+              "  pm.response.to.have.status(201);",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.isMatch).to.eql(true);",
+              "  pm.collectionVariables.set('matchId', body.match.id);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"actorId\": \"{{sofiaId}}\",\n  \"targetId\": \"{{mariaId}}\",\n  \"decision\": \"like\"\n}"
+        },
+        "url": "{{baseUrl}}/api/swipes"
+      }
+    },
+    {
+      "name": "11 Crear sesión virtual",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('La sesión inicia pendiente', function () {",
+              "  pm.response.to.have.status(201);",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.session.status).to.eql('pendiente');",
+              "  pm.collectionVariables.set('sessionId', body.session.id);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"matchId\": \"{{matchId}}\",\n  \"proposerId\": \"{{sofiaId}}\",\n  \"scheduledAt\": \"2026-07-25T18:00:00Z\",\n  \"durationMinutes\": 60,\n  \"modality\": \"virtual\"\n}"
+        },
+        "url": "{{baseUrl}}/api/sessions"
+      }
+    },
+    {
+      "name": "12 Aceptar sesión",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"aceptada\"\n}"
+        },
+        "url": "{{baseUrl}}/api/sessions/{{sessionId}}"
+      }
+    },
+    {
+      "name": "13 Sesiones del perfil",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/sessions?userId={{sofiaId}}"
+      }
+    },
+    {
+      "name": "14 Crear publicación",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"authorId\": \"{{sofiaId}}\",\n  \"subjectId\": \"{{calculoId}}\",\n  \"type\": \"foto\",\n  \"title\": \"Resumen de integrales\",\n  \"description\": \"Ejercicio resuelto para la demo\",\n  \"tags\": [\"integrales\", \"calculo\"],\n  \"mediaUrl\": \"https://images.unsplash.com/photo-1509228468518-180dd4864904\"\n}"
+        },
+        "url": "{{baseUrl}}/api/posts"
+      }
+    }
+  ]
+}
