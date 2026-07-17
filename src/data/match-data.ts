@@ -3,7 +3,6 @@ export type MatchCandidate = {
   name: string;
   initials: string;
   role: string;
-  /** Intención visible en la tarjeta: aprender, enseñar o ambos. */
   intent: "aprender" | "enseñar" | "ambos";
   intentLabel: string;
   career: string;
@@ -14,41 +13,53 @@ export type MatchCandidate = {
   compatibility: number;
   reasons: string[];
   accent: string;
+  sharedSubject: string;
   isMutualMatch?: boolean;
 };
 
+export type ProfileData = {
+  name: string;
+  initials: string;
+  role: string;
+  career: string;
+  bio: string;
+  subjects: string[];
+  availability: string;
+};
+
+export type ProfileSession = {
+  id: string;
+  person: string;
+  initials: string;
+  subject: string;
+  time: string;
+  duration: string;
+  modality: string;
+  status: "Pendiente" | "Aceptada" | "Cambio propuesto";
+  accent: string;
+};
+
+/**
+ * Deck alineado al seed: Lucía ya está omitida y Carlos ya es match activo.
+ * Guion demo: omitir Diego → like a María.
+ */
 export const matchCandidates: MatchCandidate[] = [
   {
     id: "diego",
-    name: "Diego Ramírez",
+    name: "Diego Ramos",
     initials: "DR",
-    role: "Estudiante",
-    intent: "aprender",
-    intentLabel: "Solo busca aprender",
-    career: "Ingeniería en Sistemas",
-    bio: "Empiezo Física I y necesito a alguien paciente para resolver ejercicios juntos. No enseño todavía.",
-    subjects: ["Física", "Programación"],
-    goal: "Aprobar el parcial de Física I",
-    availability: "Lun y mié · 6:00 pm",
-    compatibility: 78,
-    reasons: ["Coinciden en horario de tarde", "Ambos estudian ingeniería"],
+    role: "Diseñador y estudiante",
+    intent: "ambos",
+    intentLabel: "Aprende y enseña",
+    career: "Diseño Digital",
+    bio: "Diseñador y desarrollador; comparto recursos visuales y quiero mejorar en programación.",
+    subjects: ["Programación", "Diseño"],
+    goal: "Aprender programación y compartir recursos",
+    availability: "Tarde · domingo",
+    compatibility: 72,
+    reasons: ["Comparte interés en Programación", "Disponibilidad de tarde"],
     accent: "from-cyan-400 to-blue-600",
-  },
-  {
-    id: "lucia",
-    name: "Lucía Pérez",
-    initials: "LP",
-    role: "Estudiante",
-    intent: "aprender",
-    intentLabel: "Solo busca aprender",
-    career: "Comunicación",
-    bio: "Quiero ganar confianza al hablar en inglés. Busco práctica, no estoy lista para enseñar.",
-    subjects: ["Inglés"],
-    goal: "Practicar speaking dos veces por semana",
-    availability: "Vie · 7:00–9:00 pm",
-    compatibility: 81,
-    reasons: ["Objetivo de conversación en común", "Disponibilidad nocturna"],
-    accent: "from-sky-400 to-indigo-500",
+    sharedSubject: "Programación",
   },
   {
     id: "maria",
@@ -58,119 +69,149 @@ export const matchCandidates: MatchCandidate[] = [
     intent: "ambos",
     intentLabel: "Aprende y enseña",
     career: "Ingeniería Industrial",
-    bio: "Te ayudo con Cálculo I y, a cambio, busco practicar inglés cada semana.",
-    subjects: ["Cálculo I", "Inglés"],
-    goal: "Enseñar integrales y practicar conversación",
-    availability: "Mar y jue · 4:00–7:00 pm",
+    bio: "Mentora de cálculo. Me gustan las sesiones cortas con ejercicios prácticos.",
+    subjects: ["Cálculo", "Programación"],
+    goal: "Enseñar Cálculo I y practicar ejercicios",
+    availability: "Tarde · martes",
     compatibility: 92,
-    reasons: ["Coinciden en Cálculo I", "Disponibilidad por la tarde"],
-    accent: "from-violet-400 to-fuchsia-600",
+    reasons: ["Coinciden en Cálculo", "Disponibilidad por la tarde"],
+    accent: "from-[#3B82F6] to-[#14B8A6]",
+    sharedSubject: "Cálculo",
     isMutualMatch: true,
   },
-  {
-    id: "andre",
-    name: "André Castillo",
-    initials: "AC",
-    role: "Ambos",
-    intent: "ambos",
-    intentLabel: "Aprende y enseña",
-    career: "Ciencias de la Computación",
-    bio: "Enseño Python a principiantes y yo estoy reforzando Cálculo para el examen de admisión a maestría.",
-    subjects: ["Programación", "Cálculo I"],
-    goal: "Mentorear bucles y dominar límites",
-    availability: "Sáb · 10:00 am–1:00 pm",
-    compatibility: 88,
-    reasons: ["Comparte Programación y Cálculo", "Nivel compatible"],
-    accent: "from-emerald-400 to-teal-600",
-  },
-  {
-    id: "valeria",
-    name: "Valeria Méndez",
-    initials: "VM",
-    role: "Profesora",
-    intent: "enseñar",
-    intentLabel: "Principalmente enseña",
-    career: "Física Aplicada",
-    bio: "Profesora auxiliar. Ofrezco sesiones cortas de mecánica y vectores para quien va empezando.",
-    subjects: ["Física"],
-    goal: "Acompañar a estudiantes de primer año",
-    availability: "Mar y jue · 5:00–7:00 pm",
-    compatibility: 74,
-    reasons: ["Puede enseñar Física", "Horario de tarde compatible"],
-    accent: "from-rose-400 to-orange-500",
-  },
-  {
-    id: "camila",
-    name: "Camila Torres",
-    initials: "CT",
-    role: "Profesora",
-    intent: "enseñar",
-    intentLabel: "Principalmente enseña",
-    career: "Diseño Gráfico",
-    bio: "Comparto recursos para convertir ideas complejas en visuales claros. Abierta a mentorías de UI.",
-    subjects: ["Diseño", "Presentaciones"],
-    goal: "Guiar portafolios de diseño",
-    availability: "Vie · 3:00–6:00 pm",
-    compatibility: 65,
-    reasons: ["Objetivos creativos afines", "Prefieren sesiones cortas"],
-    accent: "from-orange-300 to-rose-500",
-  },
-  {
-    id: "kevin",
-    name: "Kevin Soto",
-    initials: "KS",
-    role: "Estudiante",
-    intent: "aprender",
-    intentLabel: "Solo busca aprender",
-    career: "Administración",
-    bio: "Nunca había programado. Busco a alguien que explique desde cero, sin presión.",
-    subjects: ["Programación"],
-    goal: "Entender variables y funciones",
-    availability: "Dom · 4:00–6:00 pm",
-    compatibility: 70,
-    reasons: ["Busca apoyo en Programación", "Sesiones de fin de semana"],
-    accent: "from-lime-400 to-green-600",
-  },
-  {
-    id: "elena",
-    name: "Elena Ruiz",
-    initials: "ER",
-    role: "Ambos",
-    intent: "ambos",
-    intentLabel: "Aprende y enseña",
-    career: "Lingüística",
-    bio: "Enseño inglés conversacional y estoy aprendiendo tipografía básica para mis materiales de clase.",
-    subjects: ["Inglés", "Diseño"],
-    goal: "Intercambiar speaking por feedback de diseño",
-    availability: "Mié · 6:00–8:00 pm",
-    compatibility: 84,
-    reasons: ["Intercambio de enseñanza", "Coinciden en Inglés"],
-    accent: "from-fuchsia-400 to-purple-600",
-  },
 ];
 
-export const profile = {
-  name: "Sofía Herrera",
-  initials: "SH",
-  role: "Estudiante de Ingeniería",
-  career: "Universidad de Guatemala",
-  bio: "Aprendo mejor compartiendo apuntes, ejercicios y una buena conversación.",
-  subjects: ["Cálculo I", "Inglés", "Programación"],
-  availability: "Mar y jue · tardes",
+let profileState: ProfileData = {
+  name: "Sofía Martínez",
+  initials: "SM",
+  role: "Estudiante",
+  career: "Ingeniería en Sistemas",
+  bio: "Estudio Ingeniería y aprendo mejor resolviendo ejercicios en equipo.",
+  subjects: ["Cálculo", "Inglés"],
+  availability: "Tarde · sábado",
 };
 
+const profileListeners = new Set<() => void>();
+
+function notifyProfile() {
+  profileListeners.forEach((listener) => listener());
+}
+
+export function getProfile() {
+  return profileState;
+}
+
+export function subscribeProfile(listener: () => void) {
+  profileListeners.add(listener);
+  return () => {
+    profileListeners.delete(listener);
+  };
+}
+
+export function updateProfile(patch: Partial<ProfileData>) {
+  profileState = { ...profileState, ...patch };
+  if (patch.name) {
+    const parts = patch.name.trim().split(/\s+/);
+    profileState.initials = parts.map((part) => part[0]?.toUpperCase() ?? "").join("").slice(0, 2) || "SM";
+  }
+  notifyProfile();
+}
+
+/** Publicaciones de Sofía en el seed (post …0202). */
 export const profilePosts = [
-  { id: "post-1", subject: "Cálculo I", type: "Video", title: "Integrales por sustitución en 3 pasos", views: "1.2k", accent: "from-violet-500 to-indigo-700" },
-  { id: "post-2", subject: "Inglés", type: "Foto", title: "Mi guía de phrasal verbs", views: "486", accent: "from-amber-400 to-orange-600" },
-  { id: "post-3", subject: "Programación", type: "Video", title: "Cómo entender un loop", views: "789", accent: "from-cyan-400 to-blue-700" },
+  {
+    id: "00000000-0000-4000-8000-000000000202",
+    subject: "Inglés",
+    type: "Foto",
+    title: "Mis conectores favoritos",
+    views: "486",
+    accent: "from-amber-400 to-orange-600",
+  },
 ];
 
-export const profileSessions = [
-  { id: "session-1", person: "María López", initials: "ML", subject: "Cálculo I", time: "Hoy · 5:00 pm", duration: "60 min", modality: "Virtual", status: "Pendiente", accent: "bg-violet-100 text-violet-700" },
-  { id: "session-2", person: "Daniel Cruz", initials: "DC", subject: "Inglés conversacional", time: "Vie · 4:30 pm", duration: "30 min", modality: "Virtual", status: "Aceptada", accent: "bg-emerald-100 text-emerald-700" },
+const statusAccent: Record<ProfileSession["status"], string> = {
+  Pendiente: "bg-[#DBEAFE] text-[#3B82F6]",
+  Aceptada: "bg-[#CCFBF1] text-[#0F766E]",
+  "Cambio propuesto": "bg-[#FEF3C7] text-[#B45309]",
+};
+
+/** Sesiones seed Sofía ↔ Carlos (…0401 pendiente, …0402 aceptada). */
+let sessionsState: ProfileSession[] = [
+  {
+    id: "00000000-0000-4000-8000-000000000401",
+    person: "Carlos Reyes",
+    initials: "CR",
+    subject: "Cálculo",
+    time: "Sáb 18 jul · 4:00 pm",
+    duration: "60 min",
+    modality: "Virtual",
+    status: "Pendiente",
+    accent: statusAccent.Pendiente,
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000402",
+    person: "Carlos Reyes",
+    initials: "CR",
+    subject: "Cálculo",
+    time: "Lun 20 jul · 4:00 pm",
+    duration: "30 min",
+    modality: "Virtual",
+    status: "Aceptada",
+    accent: statusAccent.Aceptada,
+  },
 ];
 
+const sessionListeners = new Set<() => void>();
+
+function notifySessions() {
+  sessionListeners.forEach((listener) => listener());
+}
+
+export function getProfileSessions() {
+  return sessionsState;
+}
+
+export function subscribeSessions(listener: () => void) {
+  sessionListeners.add(listener);
+  return () => {
+    sessionListeners.delete(listener);
+  };
+}
+
+export function addPendingSession(input: {
+  person: string;
+  initials: string;
+  subject: string;
+  time: string;
+  duration: string;
+  modality: string;
+}) {
+  sessionsState = [
+    {
+      id: `session-${Date.now()}`,
+      ...input,
+      status: "Pendiente",
+      accent: statusAccent.Pendiente,
+    },
+    ...sessionsState,
+  ];
+  notifySessions();
+}
+
+export function updateSessionStatus(id: string, status: ProfileSession["status"]) {
+  sessionsState = sessionsState.map((session) =>
+    session.id === id ? { ...session, status, accent: statusAccent[status] } : session,
+  );
+  notifySessions();
+}
+
+/** Guardado seed: Sofía → post de María “…0201”. */
 export const savedPosts = [
-  { id: "saved-1", author: "Valeria M.", subject: "Física", title: "Resumen: leyes de Newton", accent: "from-rose-400 to-pink-600" },
-  { id: "saved-2", author: "Pablo G.", subject: "Programación", title: "Array methods que sí usarás", accent: "from-teal-400 to-cyan-700" },
+  {
+    id: "00000000-0000-4000-8000-000000000201",
+    author: "María López",
+    subject: "Cálculo",
+    title: "Derivadas en 60 segundos",
+    accent: "from-[#3B82F6] to-[#14B8A6]",
+  },
 ];

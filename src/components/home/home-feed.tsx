@@ -2,20 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Bell,
-  BookOpen,
-  Compass,
-  Heart,
-  Home,
-  Plus,
-  Search,
-  UserRound,
-  Video,
-} from "lucide-react";
-import { useMemo, useState } from "react";
+import { BookOpen, Search, Video } from "lucide-react";
+import { Suspense, useMemo, useState, useSyncExternalStore } from "react";
+import { useSearchParams } from "next/navigation";
 
-import { feedPosts, subjects, type FeedPost, type Subject } from "@/data/feed";
+import { BottomNav } from "@/components/bottom-nav";
+import {
+  getFeedPosts,
+  subjects,
+  subscribeFeed,
+  type FeedPost,
+  type Subject,
+} from "@/data/feed";
 
 const artworkStyles: Record<FeedPost["artwork"], string> = {
   calculus: "from-[#3B82F6] via-[#14B8A6] to-[#FBBF24]",
@@ -49,7 +47,7 @@ function PostArtwork({ post }: { post: FeedPost }) {
         </span>
       )}
       {post.type === "video" && (
-        <span className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/90 pl-0.5 text-[#201e35] shadow-lg">
+        <span className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/90 pl-0.5 text-[#1F2937] shadow-lg">
           ▶
         </span>
       )}
@@ -57,25 +55,47 @@ function PostArtwork({ post }: { post: FeedPost }) {
   );
 }
 
-export default function HomePage() {
-  const [selectedSubject, setSelectedSubject] = useState<Subject>("Todo");
+export function HomePage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-[#F3F4F6]" />}>
+      <HomeFeedShell />
+    </Suspense>
+  );
+}
+
+function HomeFeedShell() {
+  const searchParams = useSearchParams();
+  const subjectParam = searchParams.get("subject") ?? "Todo";
+  return <HomeFeed key={subjectParam} subjectParam={subjectParam} />;
+}
+
+function HomeFeed({ subjectParam }: { subjectParam: string }) {
+  const urlSubject =
+    subjectParam && subjects.includes(subjectParam as Subject)
+      ? (subjectParam as Subject)
+      : "Todo";
+
+  const [selectedSubject, setSelectedSubject] = useState<Subject>(urlSubject);
   const [query, setQuery] = useState("");
+  const posts = useSyncExternalStore(subscribeFeed, getFeedPosts, getFeedPosts);
 
   const visiblePosts = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("es");
-    return feedPosts.filter((post) => {
+    return posts.filter((post) => {
       const matchesSubject = selectedSubject === "Todo" || post.subject === selectedSubject;
-      const searchable = [post.title, post.subject, post.author, ...post.tags].join(" ").toLocaleLowerCase("es");
+      const searchable = [post.title, post.description, post.subject, post.author, ...post.tags]
+        .join(" ")
+        .toLocaleLowerCase("es");
       return matchesSubject && (!normalizedQuery || searchable.includes(normalizedQuery));
     });
-  }, [query, selectedSubject]);
+  }, [posts, query, selectedSubject]);
 
   return (
     <main className="min-h-screen bg-[#F3F4F6] text-[#1F2937]">
       <section className="mx-auto min-h-screen max-w-[480px] bg-[#F3F4F6] pb-24">
         <header className="sticky top-0 z-20 bg-white/95 px-4 pb-3 pt-5 shadow-sm backdrop-blur">
-          <div className="flex items-center justify-between gap-3">
-            <Link href="/home" className="inline-flex h-11 items-center" aria-label="Inicio de StudyMatch">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="inline-flex h-11 items-center" aria-label="Ver presentación de StudyMatch">
               <Image
                 src="/brand/studymatch-logo.png"
                 alt="StudyMatch"
@@ -85,9 +105,6 @@ export default function HomePage() {
                 className="h-11 w-[132px] object-contain object-left"
               />
             </Link>
-            <button type="button" aria-label="Ver notificaciones" className="grid h-10 w-10 place-items-center rounded-full text-[#1F2937] hover:bg-[#F3F4F6]">
-              <Bell size={21} />
-            </button>
           </div>
           <label className="mt-4 flex h-11 items-center gap-2 rounded-xl bg-[#F3F4F6] px-3 text-[#1F2937]/60 ring-1 ring-[#3B82F6]/20 focus-within:ring-[#3B82F6]">
             <Search size={19} />
@@ -131,12 +148,14 @@ export default function HomePage() {
                     {post.avatar}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-start gap-2">
-                      <h2 className="flex-1 text-[15px] font-bold leading-5 text-[#1F2937]">{post.title}</h2>
-                      <button type="button" aria-label={`Más opciones de ${post.title}`} className="-mt-1 rounded-full p-1 text-[#1F2937]/50 hover:bg-white">•••</button>
-                    </div>
-                    <p className="mt-1 text-sm text-[#1F2937]/60">{post.author} · <span className="text-[#14B8A6]">{post.subject}</span></p>
-                    <p className="text-sm text-[#1F2937]/50">{post.views} · {post.createdAt}</p>
+                    <h2 className="text-[15px] font-bold leading-5 text-[#1F2937]">{post.title}</h2>
+                    <p className="mt-1 text-sm leading-5 text-[#1F2937]/65">{post.description}</p>
+                    <p className="mt-1 text-sm text-[#1F2937]/60">
+                      {post.author} · <span className="text-[#14B8A6]">{post.subject}</span>
+                    </p>
+                    <p className="text-sm text-[#1F2937]/50">
+                      {post.views} · {post.createdAt}
+                    </p>
                   </div>
                 </div>
               </article>
@@ -148,18 +167,21 @@ export default function HomePage() {
               <BookOpen className="mx-auto text-[#3B82F6]" size={30} />
               <h2 className="mt-3 font-bold">Aún no hay recursos</h2>
               <p className="mt-1 text-sm leading-5 text-[#1F2937]/60">Prueba otra búsqueda o explora una clase distinta.</p>
-              <button type="button" onClick={() => { setQuery(""); setSelectedSubject("Todo"); }} className="mt-4 text-sm font-semibold text-[#3B82F6]">Limpiar filtros</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setSelectedSubject("Todo");
+                }}
+                className="mt-4 text-sm font-semibold text-[#3B82F6]"
+              >
+                Limpiar filtros
+              </button>
             </div>
           )}
         </div>
 
-        <nav aria-label="Navegación principal" className="fixed bottom-0 left-1/2 z-30 flex h-[72px] w-full max-w-[480px] -translate-x-1/2 items-center justify-around border-t border-black/5 bg-white px-2 pb-1 shadow-[0_-6px_20px_rgba(31,41,55,0.08)]">
-          <Link href="/home" className="flex min-w-14 flex-col items-center gap-1 text-xs font-medium text-[#3B82F6]"><Home size={22} fill="currentColor" />Inicio</Link>
-          <Link href="/classes" className="flex min-w-14 flex-col items-center gap-1 text-xs font-medium text-[#1F2937]/60"><Compass size={22} />Clases</Link>
-          <Link href="/create" aria-label="Crear publicación" className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-4 border-[#F3F4F6] bg-[#FBBF24] text-[#1F2937] shadow-lg"><Plus size={29} strokeWidth={2.6} /></Link>
-          <Link href="/match" className="flex min-w-14 flex-col items-center gap-1 text-xs font-medium text-[#1F2937]/60"><Heart size={22} />Match</Link>
-          <Link href="/profile" className="flex min-w-14 flex-col items-center gap-1 text-xs font-medium text-[#1F2937]/60"><UserRound size={22} />Perfil</Link>
-        </nav>
+        <BottomNav />
       </section>
     </main>
   );
