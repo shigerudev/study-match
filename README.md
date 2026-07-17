@@ -115,6 +115,6 @@ Priorizamos una experiencia de demostración completa: crear perfil, explorar un
 
 La versión actual del MVP está desplegada en Vercel:
 
-[Abrir StudyMatch](https://study-match-xi.vercel.app/)
+[Abrir StudyMatch](https://study-match-dz34unb2p-hugo-arias-projects.vercel.app)
 
 > El repositorio contiene la integración del logo. Para que los cambios más recientes aparezcan en la URL pública, el proyecto de Vercel debe desplegar el commit actual de `main`.
